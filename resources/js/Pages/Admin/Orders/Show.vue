@@ -1,0 +1,72 @@
+<template>
+  <Head :title="`Pesanan ${order.order_code}`" />
+  <AdminLayout>
+    <Link href="/admin/orders" class="text-sm text-gray-500 hover:text-primary flex items-center gap-1 mb-4"><Icon icon="mdi:arrow-left" /> Kembali</Link>
+    <div class="flex items-center justify-between mb-6">
+      <div><h1 class="text-2xl font-bold text-text">{{ order.order_code }}</h1><p class="text-sm text-gray-500">{{ order.created_at }}</p></div>
+      <span :class="['px-4 py-1.5 rounded-full text-sm font-medium', sc(order.status_color)]">{{ order.status_label }}</span>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Items -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 class="font-semibold text-text mb-4">Item Pesanan</h2>
+          <div class="space-y-2">
+            <div v-for="item in order.items" :key="item.id" class="flex justify-between py-2 border-b border-gray-50 last:border-0">
+              <div><p class="font-medium">{{ item.product_name }}</p><p class="text-sm text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</p></div>
+              <p class="font-semibold">Rp {{ fmt(item.subtotal) }}</p>
+            </div>
+          </div>
+          <div class="flex justify-between mt-4 pt-4 border-t border-gray-100 text-lg font-bold"><span>Total</span><span class="text-primary">Rp {{ fmt(order.total_amount) }}</span></div>
+        </div>
+        <!-- Pelanggan -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 class="font-semibold text-text mb-4">Info Pelanggan & Pengiriman</h2>
+          <div class="text-sm space-y-1 text-gray-600">
+            <p><strong>{{ order.user.name }}</strong> ({{ order.user.email }})</p>
+            <p>HP: {{ order.user.phone || order.shipping_phone }}</p>
+            <p class="mt-2">Penerima: <strong>{{ order.shipping_name }}</strong> ({{ order.shipping_phone }})</p>
+            <p>{{ order.shipping_address }}</p>
+            <p v-if="order.notes" class="mt-2 italic">Catatan: {{ order.notes }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Payment -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 class="font-semibold text-text mb-4">Pembayaran</h2>
+          <div v-if="order.payment" class="space-y-2 text-sm">
+            <p>{{ order.payment.sender_name }} — {{ order.payment.sender_bank }}</p>
+            <p>Rp {{ fmt(order.payment.amount) }} | {{ order.payment.transfer_date }}</p>
+            <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border mt-2" alt="Bukti">
+          </div>
+          <p v-else class="text-sm text-gray-500">Belum ada bukti pembayaran</p>
+        </div>
+
+        <!-- Update Status -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 class="font-semibold text-text mb-4">Ubah Status</h2>
+          <div class="space-y-2">
+            <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('diproses')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Verifikasi & Proses</button>
+            <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('ditolak')" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition">✗ Tolak Pembayaran</button>
+            <button v-if="order.status === 'diproses'" @click="updateStatus('dikirim')" class="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition">📦 Tandai Dikirim</button>
+            <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Tandai Selesai</button>
+            <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition">Batalkan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AdminLayout>
+</template>
+
+<script setup>
+import { Head, Link, router } from '@inertiajs/vue3';
+import { Icon } from '@iconify/vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+const props = defineProps({ order: Object });
+function fmt(p) { return Number(p).toLocaleString('id-ID'); }
+function sc(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }
+function updateStatus(status) { router.put(`/admin/orders/${props.order.id}/status`, { status }); }
+</script>
