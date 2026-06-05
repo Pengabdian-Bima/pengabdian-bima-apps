@@ -18,8 +18,8 @@
               <td class="px-4 py-3 whitespace-nowrap"><span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full font-medium">{{ cat.products_count }}</span></td>
               <td class="px-4 py-3 whitespace-nowrap">
                 <div class="flex items-center gap-1">
-                  <button @click="editCat(cat)" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"><Icon icon="mdi:pencil" /></button>
-                  <button @click="deleteCat(cat.id)" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Icon icon="mdi:trash-can" /></button>
+                  <button @click="editCat(cat)" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-200 hover:text-blue-700 hover:bg-blue-200 rounded-lg transition"><Icon icon="mdi:pencil" /></button>
+                  <button @click="deleteCat(cat.id)" class="p-1.5 text-red-500 bg-red-100 border border-red-200 hover:text-red-700 hover:bg-red-200 rounded-lg transition"><Icon icon="mdi:trash-can" /></button>
                 </div>
               </td>
             </tr>
