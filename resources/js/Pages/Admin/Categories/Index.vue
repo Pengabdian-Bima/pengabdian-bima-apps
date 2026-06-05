@@ -7,23 +7,25 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead><tr class="bg-gray-50 text-left"><th class="px-4 py-3 font-medium text-gray-500">Nama</th><th class="px-4 py-3 font-medium text-gray-500">Slug</th><th class="px-4 py-3 font-medium text-gray-500">Deskripsi</th><th class="px-4 py-3 font-medium text-gray-500">Produk</th><th class="px-4 py-3 font-medium text-gray-500">Aksi</th></tr></thead>
-        <tbody>
-          <tr v-for="cat in categories.data" :key="cat.id" class="border-t border-gray-50 hover:bg-gray-50/50">
-            <td class="px-4 py-3 font-medium text-text">{{ cat.name }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ cat.slug }}</td>
-            <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ cat.description || '-' }}</td>
-            <td class="px-4 py-3"><span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full font-medium">{{ cat.products_count }}</span></td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-1">
-                <button @click="editCat(cat)" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"><Icon icon="mdi:pencil" /></button>
-                <button @click="deleteCat(cat.id)" class="p-1.5 text-red-500 bg-red-100 border border-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Icon icon="mdi:trash-can" /></button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50 text-left whitespace-nowrap"><th class="px-4 py-3 font-medium text-gray-500">Nama</th><th class="px-4 py-3 font-medium text-gray-500">Slug</th><th class="px-4 py-3 font-medium text-gray-500">Deskripsi</th><th class="px-4 py-3 font-medium text-gray-500">Produk</th><th class="px-4 py-3 font-medium text-gray-500">Aksi</th></tr></thead>
+          <tbody>
+            <tr v-for="cat in categories.data" :key="cat.id" class="border-t border-gray-50 hover:bg-gray-50/50">
+              <td class="px-4 py-3 font-medium text-text whitespace-nowrap">{{ cat.name }}</td>
+              <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ cat.slug }}</td>
+              <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ cat.description || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap"><span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full font-medium">{{ cat.products_count }}</span></td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="flex items-center gap-1">
+                  <button @click="editCat(cat)" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"><Icon icon="mdi:pencil" /></button>
+                  <button @click="deleteCat(cat.id)" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Icon icon="mdi:trash-can" /></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Modal -->

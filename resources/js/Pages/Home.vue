@@ -56,13 +56,13 @@
           <h2 class="text-3xl font-bold text-text">Keunggulan Produk Kami</h2>
           <p class="text-gray-500 mt-3 max-w-2xl mx-auto">Biskuit Ikan Huluu Danau Limboto diproduksi dengan standar kualitas tinggi</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div v-for="(feat, i) in features" :key="i" class="group p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
-            <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110', feat.bgClass]">
-              <Icon :icon="feat.icon" :class="['text-2xl', feat.iconClass]" />
+        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div v-for="(feat, i) in features" :key="i" class="group p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+            <div :class="['w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 transition-all duration-300 group-hover:scale-110', feat.bgClass]">
+              <Icon :icon="feat.icon" :class="['text-xl sm:text-2xl', feat.iconClass]" />
             </div>
-            <h3 class="text-lg font-semibold text-text mb-2">{{ feat.title }}</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">{{ feat.desc }}</p>
+            <h3 class="text-sm sm:text-lg font-semibold text-text mb-1 sm:mb-2">{{ feat.title }}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 leading-relaxed">{{ feat.desc }}</p>
           </div>
         </div>
       </div>
@@ -80,26 +80,28 @@
             Lihat Semua <Icon icon="mdi:arrow-right" />
           </Link>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="product in products" :key="product.id" class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1">
-            <div class="aspect-[4/3] bg-gradient-to-br from-orange-50 to-amber-50 relative overflow-hidden flex items-center justify-center">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div v-for="product in products" :key="product.id" class="group bg-white rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 flex flex-col">
+            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 relative overflow-hidden flex items-center justify-center">
               <img v-if="product.thumbnail_url" :src="product.thumbnail_url" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-              <Icon v-else icon="mdi:food-croissant" class="text-6xl text-primary/30" />
-              <div class="absolute top-3 left-3">
-                <span class="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-primary">{{ product.category }}</span>
+              <Icon v-else icon="mdi:food-croissant" class="text-4xl sm:text-6xl text-primary/30" />
+              <div class="absolute top-2 left-2 sm:top-3 sm:left-3">
+                <span class="px-2 py-0.5 sm:px-3 sm:py-1 bg-white/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-primary">{{ product.category }}</span>
               </div>
             </div>
-            <div class="p-5">
-              <h3 class="font-semibold text-text group-hover:text-primary transition-colors">{{ product.name }}</h3>
-              <div class="flex items-center justify-between mt-3">
-                <p class="text-xl font-bold text-primary">Rp {{ formatPrice(product.price) }}</p>
-                <span :class="['text-xs px-2 py-1 rounded-full font-medium', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
-                  {{ product.stock > 0 ? `Stok: ${product.stock}` : 'Habis' }}
-                </span>
+            <div class="p-3 sm:p-5 flex flex-col flex-1">
+              <h3 class="text-xs sm:text-base font-semibold text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug">{{ product.name }}</h3>
+              <div class="mt-auto pt-2 sm:pt-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                  <p class="text-sm sm:text-xl font-bold text-primary">Rp {{ formatPrice(product.price) }}</p>
+                  <span :class="['text-[9px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium w-fit', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
+                    {{ product.stock > 0 ? `Stok: ${product.stock}` : 'Habis' }}
+                  </span>
+                </div>
+                <Link :href="`/produk/${product.slug}`" class="mt-2.5 sm:mt-4 w-full py-1.5 sm:py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2">
+                  <Icon icon="mdi:cart-plus" class="text-sm sm:text-base" /> Beli
+                </Link>
               </div>
-              <Link :href="`/produk/${product.slug}`" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2">
-                <Icon icon="mdi:cart-plus" /> Beli Sekarang
-              </Link>
             </div>
           </div>
         </div>

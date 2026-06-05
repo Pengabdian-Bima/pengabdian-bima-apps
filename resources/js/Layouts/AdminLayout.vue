@@ -1,7 +1,12 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex">
+    <!-- Mobile Overlay -->
+    <Transition enter-active-class="transition duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-300" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+    </Transition>
+
     <!-- Sidebar -->
-    <aside :class="['fixed inset-y-0 left-0 z-40 bg-gray-900 text-white transition-all duration-300 flex flex-col', sidebarOpen ? 'w-64' : 'w-20']">
+    <aside :class="['fixed inset-y-0 left-0 z-40 bg-gray-900 text-white transition-all duration-300 flex flex-col', sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20']">
       <div class="flex items-center gap-3 h-16 px-4 border-b border-gray-800">
         <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30">
           <Icon icon="mdi:store" class="text-white text-xl" />
@@ -32,7 +37,7 @@
     </aside>
 
     <!-- Main Content -->
-    <div :class="['flex-1 transition-all duration-300', sidebarOpen ? 'ml-64' : 'ml-20']">
+    <div :class="['flex-1 transition-all duration-300 min-w-0 flex flex-col', sidebarOpen ? 'lg:ml-64' : 'lg:ml-20']">
       <!-- Top bar -->
       <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100 h-16 flex items-center justify-between px-6">
         <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 transition">
@@ -69,12 +74,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
 const sidebarOpen = ref(true);
 const page = usePage();
+
+function handleResize() {
+  if (typeof window !== 'undefined') {
+    sidebarOpen.value = window.innerWidth >= 1024;
+  }
+}
+
+onMounted(() => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+});
+onUnmounted(() => window.removeEventListener('resize', handleResize));
 
 const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: 'mdi:view-dashboard' },

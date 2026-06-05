@@ -11,20 +11,22 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead><tr class="bg-gray-50 text-left"><th class="px-4 py-3 font-medium text-gray-500">Kode</th><th class="px-4 py-3 font-medium text-gray-500">Pelanggan</th><th class="px-4 py-3 font-medium text-gray-500">Total</th><th class="px-4 py-3 font-medium text-gray-500">Status</th><th class="px-4 py-3 font-medium text-gray-500">Tanggal</th><th class="px-4 py-3 font-medium text-gray-500">Aksi</th></tr></thead>
-        <tbody>
-          <tr v-for="o in orders.data" :key="o.id" class="border-t border-gray-50 hover:bg-gray-50/50">
-            <td class="px-4 py-3 font-medium text-text">{{ o.order_code }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ o.user_name }}</td>
-            <td class="px-4 py-3 font-medium text-primary">Rp {{ fmt(o.total_amount) }}</td>
-            <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', sc(o.status_color)]">{{ o.status_label }}</span></td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ o.created_at }}</td>
-            <td class="px-4 py-3"><Link :href="`/admin/orders/${o.id}`" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition inline-flex"><Icon icon="mdi:eye" /></Link></td>
-          </tr>
-          <tr v-if="!orders.data.length"><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada pesanan</td></tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50 text-left whitespace-nowrap"><th class="px-4 py-3 font-medium text-gray-500">Kode</th><th class="px-4 py-3 font-medium text-gray-500">Pelanggan</th><th class="px-4 py-3 font-medium text-gray-500">Total</th><th class="px-4 py-3 font-medium text-gray-500">Status</th><th class="px-4 py-3 font-medium text-gray-500">Tanggal</th><th class="px-4 py-3 font-medium text-gray-500">Aksi</th></tr></thead>
+          <tbody>
+            <tr v-for="o in orders.data" :key="o.id" class="border-t border-gray-50 hover:bg-gray-50/50 whitespace-nowrap">
+              <td class="px-4 py-3 font-medium text-text">{{ o.order_code }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ o.user_name }}</td>
+              <td class="px-4 py-3 font-medium text-primary">Rp {{ fmt(o.total_amount) }}</td>
+              <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', sc(o.status_color)]">{{ o.status_label }}</span></td>
+              <td class="px-4 py-3 text-gray-500 text-xs">{{ o.created_at }}</td>
+              <td class="px-4 py-3"><Link :href="`/admin/orders/${o.id}`" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition inline-flex"><Icon icon="mdi:eye" /></Link></td>
+            </tr>
+            <tr v-if="!orders.data.length"><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada pesanan</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </AdminLayout>
 </template>
