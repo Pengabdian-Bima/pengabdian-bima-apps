@@ -14,9 +14,9 @@
             <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', p.is_low ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700']">{{ p.is_low ? 'Rendah' : 'Aman' }}</span></td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-1">
-                <button @click="openAdjust(p, 'in')" class="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition" title="Tambah Stok"><Icon icon="mdi:plus-circle" /></button>
-                <button @click="openAdjust(p, 'out')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Kurangi Stok"><Icon icon="mdi:minus-circle" /></button>
-                <Link :href="`/admin/stock/${p.id}/history`" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Riwayat"><Icon icon="mdi:history" /></Link>
+                <button @click="openAdjust(p, 'in')" class="p-1.5 text-green-500 bg-green-100 border border-green-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition" title="Tambah Stok"><Icon icon="mdi:plus-circle" /></button>
+                <button @click="openAdjust(p, 'out')" class="p-1.5 text-red-500 bg-red-100 border border-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Kurangi Stok"><Icon icon="mdi:minus-circle" /></button>
+                <Link :href="`/admin/stock/${p.id}/history`" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Riwayat"><Icon icon="mdi:history" /></Link>
               </div>
             </td>
           </tr>

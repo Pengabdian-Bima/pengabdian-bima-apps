@@ -44,8 +44,8 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-text">Produk Terlaris</h2>
           <div class="flex gap-1">
-            <a :href="`/admin/reports/best-selling-pdf?period=${period}`" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="PDF"><Icon icon="mdi:file-pdf-box" class="text-lg" /></a>
-            <a :href="`/admin/reports/best-selling-excel?period=${period}`" class="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition" title="Excel"><Icon icon="mdi:file-excel" class="text-lg" /></a>
+            <a :href="`/admin/reports/best-selling-pdf?period=${period}`" class="p-1.5 text-red-500 bg-red-100 border border-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="PDF"><Icon icon="mdi:file-pdf-box" class="text-lg" /></a>
+            <a :href="`/admin/reports/best-selling-excel?period=${period}`" class="p-1.5 text-green-500 bg-green-100 border border-green-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition" title="Excel"><Icon icon="mdi:file-excel" class="text-lg" /></a>
           </div>
         </div>
         <div v-if="bestSelling.length" class="space-y-3">

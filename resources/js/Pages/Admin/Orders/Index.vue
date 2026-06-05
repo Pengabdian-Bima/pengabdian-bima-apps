@@ -20,7 +20,7 @@
             <td class="px-4 py-3 font-medium text-primary">Rp {{ fmt(o.total_amount) }}</td>
             <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', sc(o.status_color)]">{{ o.status_label }}</span></td>
             <td class="px-4 py-3 text-gray-500 text-xs">{{ o.created_at }}</td>
-            <td class="px-4 py-3"><Link :href="`/admin/orders/${o.id}`" class="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition inline-flex"><Icon icon="mdi:eye" /></Link></td>
+            <td class="px-4 py-3"><Link :href="`/admin/orders/${o.id}`" class="p-1.5 text-blue-500 bg-blue-100 border border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition inline-flex"><Icon icon="mdi:eye" /></Link></td>
           </tr>
           <tr v-if="!orders.data.length"><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada pesanan</td></tr>
         </tbody>
