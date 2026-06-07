@@ -32,6 +32,21 @@
                 <Icon :icon="showPass ? 'mdi:eye-off' : 'mdi:eye'" class="text-lg" />
               </button>
             </div>
+            <!-- Real-time password validation -->
+            <div v-if="form.password.length > 0" class="mt-2 space-y-1">
+              <div class="flex items-center gap-2 text-xs">
+                <Icon :icon="rules.minLength ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.minLength ? 'text-success' : 'text-danger'" />
+                <span :class="rules.minLength ? 'text-success' : 'text-danger'">Minimal 8 karakter</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <Icon :icon="rules.hasUppercase ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.hasUppercase ? 'text-success' : 'text-danger'" />
+                <span :class="rules.hasUppercase ? 'text-success' : 'text-danger'">Minimal 1 huruf besar</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <Icon :icon="rules.noSpaces ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.noSpaces ? 'text-success' : 'text-danger'" />
+                <span :class="rules.noSpaces ? 'text-success' : 'text-danger'">Tidak boleh ada spasi</span>
+              </div>
+            </div>
           </div>
 
           <label class="flex items-center gap-2 cursor-pointer">
@@ -39,7 +54,7 @@
             <span class="text-sm text-gray-600">Ingat saya</span>
           </label>
 
-          <button type="submit" :disabled="form.processing"
+          <button type="submit" :disabled="form.processing || !isPasswordValid"
             class="w-full py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50">
             <span v-if="form.processing" class="flex items-center justify-center gap-2">
               <Icon icon="mdi:loading" class="animate-spin text-xl" /> Memproses...
@@ -58,14 +73,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
 const showPass = ref(false);
 const form = useForm({ email: '', password: '', remember: false });
 
+const rules = computed(() => ({
+  minLength: form.password.length >= 8,
+  hasUppercase: /[A-Z]/.test(form.password),
+  noSpaces: !/\s/.test(form.password),
+}));
+
+const isPasswordValid = computed(() => rules.value.minLength && rules.value.hasUppercase && rules.value.noSpaces);
+
 function submit() {
+  if (!isPasswordValid.value) return;
   form.post('/login', { preserveScroll: true });
 }
 </script>

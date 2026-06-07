@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 
 // Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -76,4 +77,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
     Route::get('reports/best-selling-pdf', [ReportController::class, 'exportBestSellingPdf'])->name('reports.best-selling-pdf');
     Route::get('reports/best-selling-excel', [ReportController::class, 'exportBestSellingExcel'])->name('reports.best-selling-excel');
+
+    Route::get('profile', [AdminProfileController::class, 'index'])->name('profile.index');
+    Route::put('profile', [AdminProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
 });
