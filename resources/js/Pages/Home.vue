@@ -31,16 +31,21 @@
             </div>
           </div>
           <div class="relative hidden lg:block">
-            <div class="w-96 h-96 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full mx-auto flex items-center justify-center">
-              <div class="w-72 h-72 bg-gradient-to-br from-primary/30 to-primary/10 rounded-full flex items-center justify-center animate-pulse">
-                <Icon icon="mdi:food-croissant" class="text-[120px] text-primary/60" />
+            <div class="w-[420px] h-[420px] mx-auto relative">
+              <!-- Decorative background ring -->
+              <div class="absolute inset-0 bg-gradient-to-br from-primary/15 to-primary/5 rounded-[2.5rem] rotate-6"></div>
+              <!-- Image container -->
+              <div class="relative w-full h-full rounded-[2rem] overflow-hidden shadow-2xl shadow-primary/20 border-4 border-white">
+                <img src="/img/biskuit.png" alt="Biskuit Ikan Huluu" class="w-full h-full object-cover">
               </div>
             </div>
-            <div class="absolute top-8 right-8 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3 animate-bounce" style="animation-duration:3s">
+            <!-- Floating badge: 100% Alami -->
+            <div class="absolute top-4 -right-2 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3 animate-bounce" style="animation-duration:3s">
               <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center"><Icon icon="mdi:leaf" class="text-success text-xl" /></div>
               <div><p class="text-sm font-semibold">100% Alami</p><p class="text-xs text-gray-500">Tanpa Pengawet</p></div>
             </div>
-            <div class="absolute bottom-12 left-4 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3">
+            <!-- Floating badge: BPOM -->
+            <div class="absolute bottom-8 -left-4 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3">
               <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center"><Icon icon="mdi:shield-check" class="text-primary text-xl" /></div>
               <div><p class="text-sm font-semibold">BPOM Certified</p><p class="text-xs text-gray-500">Aman Dikonsumsi</p></div>
             </div>

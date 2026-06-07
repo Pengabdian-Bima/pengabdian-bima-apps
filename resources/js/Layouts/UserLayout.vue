@@ -5,8 +5,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <Link href="/" class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <Icon icon="mdi:store" class="text-white text-xl" />
+            <div class="w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
+              <img src="/img/logo-udflamboyan.png" alt="Logo" class="w-full h-full object-contain" />
             </div>
             <span class="text-lg font-bold text-text hidden sm:block">UD Flamboyan</span>
           </Link>
