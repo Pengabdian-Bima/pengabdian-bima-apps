@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin UD Flamboyan',
             'email' => 'admin@flamboyan.com',
             'phone' => '081234567890',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Password123'),
             'role' => 'admin',
         ]);
 
@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Pembeli Demo',
             'email' => 'user@demo.com',
             'phone' => '081298765432',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Password123'),
             'role' => 'user',
         ]);
 

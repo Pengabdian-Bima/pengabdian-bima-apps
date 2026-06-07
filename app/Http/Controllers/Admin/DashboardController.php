@@ -14,6 +14,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        return Inertia::render('Admin/Dashboard', $this->getDashboardData());
+    }
+
+    /**
+     * JSON endpoint for real-time polling from the frontend.
+     */
+    public function realtime()
+    {
+        return response()->json($this->getDashboardData());
+    }
+
+    private function getDashboardData(): array
+    {
         $totalProducts = Product::count();
         $totalOrders = Order::count();
         $totalSales = Order::where('status', 'selesai')->sum('total_amount');
@@ -60,7 +73,7 @@ class DashboardController extends Controller
             $monthlyData[] = $monthlySales[$i] ?? 0;
         }
 
-        return Inertia::render('Admin/Dashboard', [
+        return [
             'stats' => [
                 'totalProducts' => $totalProducts,
                 'totalOrders' => $totalOrders,
@@ -72,6 +85,6 @@ class DashboardController extends Controller
             'salesChart' => $salesChart,
             'recentOrders' => $recentOrders,
             'monthlyData' => $monthlyData,
-        ]);
+        ];
     }
 }

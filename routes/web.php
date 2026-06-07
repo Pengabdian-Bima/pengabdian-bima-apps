@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
 // Admin
 Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('realtime', [DashboardController::class, 'realtime'])->name('dashboard.realtime');
 
     Route::resource('products', AdminProductController::class)->except('show');
     Route::delete('product-images/{productImage}', [AdminProductController::class, 'deleteImage'])->name('product-images.destroy');
