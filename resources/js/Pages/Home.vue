@@ -15,7 +15,7 @@
             </div>
             <h1 class="text-4xl lg:text-6xl font-extrabold text-text dark:text-white leading-tight">
               Biskuit Ikan
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">Huluu</span>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">Hulu'u</span>
               <br>Danau Limboto
             </h1>
             <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 leading-relaxed max-w-lg">
@@ -33,11 +33,9 @@
           </div>
           <div class="relative hidden lg:block">
             <div class="w-[420px] h-[420px] mx-auto relative">
-              <!-- Decorative background ring -->
-              <div class="absolute inset-0 bg-gradient-to-br from-primary/15 to-primary/5 rounded-[2.5rem] rotate-6"></div>
               <!-- Image container -->
               <div class="relative w-full h-full rounded-[2rem] overflow-hidden shadow-2xl shadow-primary/20 border-4 border-white">
-                <img src="/img/biskuit.png" alt="Biskuit Ikan Huluu" class="w-full h-full object-cover">
+                <img src="/img/maskot.png" alt="Biskuit Ikan Huluu" class="w-full h-full object-cover">
               </div>
             </div>
             <!-- Floating badge: 100% Alami -->
