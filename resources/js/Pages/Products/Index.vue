@@ -6,6 +6,20 @@
         <h1 class="text-3xl font-bold text-text dark:text-white">Semua Produk</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">Temukan produk berkualitas dari UD Flamboyan</p>
       </div>
+
+      <div class="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+        <div class="relative w-full sm:w-96">
+          <input v-model="search" type="text" placeholder="Cari nama produk..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none dark:text-white transition-all text-sm">
+          <Icon icon="mdi:magnify" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+        </div>
+        <div class="w-full sm:w-64 relative">
+          <select v-model="category" class="w-full pl-4 pr-10 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary outline-none dark:text-white appearance-none cursor-pointer transition-all text-sm">
+            <option value="">Semua Kategori</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.slug">{{ cat.name }}</option>
+          </select>
+          <Icon icon="mdi:chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xl" />
+        </div>
+      </div>
       <div v-if="products.data.length" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
         <div v-for="product in products.data" :key="product.id" class="group bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 hover:-translate-y-1 flex flex-col">
           <Link :href="`/produk/${product.slug}`" class="block">
@@ -40,11 +54,27 @@
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
-defineProps({ products: Object, categories: Array });
+const props = defineProps({ products: Object, categories: Array, filters: Object });
+
+const search = ref(props.filters?.search || '');
+const category = ref(props.filters?.category || '');
+
+let searchTimeout = null;
+watch([search, category], () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    let query = {};
+    if (search.value) query.search = search.value;
+    if (category.value) query.category = category.value;
+    
+    router.get('/produk', query, { preserveState: true, replace: true, preserveScroll: true });
+  }, 400);
+});
 
 function formatPrice(price) { return Number(price).toLocaleString('id-ID'); }
 </script>

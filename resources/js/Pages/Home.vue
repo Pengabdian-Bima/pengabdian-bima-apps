@@ -21,12 +21,13 @@
             <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 leading-relaxed max-w-lg">
               Nikmati kelezatan biskuit ikan segar dari Danau Limboto. Kaya protein, berkualitas tinggi, dan dibuat dengan resep tradisional khas Gorontalo.
             </p>
-            <div class="flex flex-wrap gap-4 mt-8">
-              <Link href="/produk" class="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 flex items-center gap-2">
-                <Icon icon="mdi:shopping" class="text-xl" /> Belanja Sekarang
+            <!-- button click ke keranjang -->
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 mt-8">
+              <Link href="/produk" class="justify-center px-3 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-primary to-primary-dark text-white text-xs sm:text-base font-semibold rounded-xl hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 flex items-center gap-1.5 sm:gap-2">
+                <Icon icon="mdi:shopping" class="text-lg sm:text-xl" /> Belanja Sekarang
               </Link>
-              <a href="#keunggulan" class="px-8 py-4 bg-white dark:bg-gray-800 text-text dark:text-white font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary transition-all duration-300 flex items-center gap-2">
-                <Icon icon="mdi:information-outline" class="text-xl" /> Pelajari Lebih
+              <a href="#keunggulan" class="justify-center px-3 py-3 sm:px-8 sm:py-4 bg-white dark:bg-gray-800 text-text dark:text-white text-xs sm:text-base font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary transition-all duration-300 flex items-center gap-1.5 sm:gap-2">
+                <Icon icon="mdi:information-outline" class="text-lg sm:text-xl" /> Pelajari Lebih
               </a>
             </div>
           </div>

@@ -10,10 +10,21 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category')
-            ->where('status', true)
-            ->latest()
+        $query = Product::with('category')->where('status', true);
+
+        if (request('search')) {
+            $query->where('name', 'like', '%' . request('search') . '%');
+        }
+
+        if (request('category')) {
+            $query->whereHas('category', function ($q) {
+                $q->where('slug', request('category'))->orWhere('id', request('category'));
+            });
+        }
+
+        $products = $query->latest()
             ->paginate(12)
+            ->withQueryString()
             ->through(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -30,6 +41,7 @@ class ProductController extends Controller
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
+            'filters' => request()->only(['search', 'category']),
         ]);
     }
 

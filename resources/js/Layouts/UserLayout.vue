@@ -19,6 +19,12 @@
           </div>
 
           <div class="flex items-center gap-3">
+            <form @submit.prevent="submitSearch" class="hidden lg:flex items-center relative">
+              <input v-model="searchQuery" type="text" placeholder="Cari produk..." class="pl-10 pr-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary dark:focus:border-primary focus:bg-white dark:focus:bg-gray-900 dark:text-white text-sm transition-all w-48 focus:w-64 outline-none" />
+              <button type="submit" class="absolute left-3 text-gray-400 hover:text-primary transition">
+                <Icon icon="mdi:magnify" class="text-lg" />
+              </button>
+            </form>
             <template v-if="$page.props.auth.user">
               <Link href="/keranjang" class="relative p-2 rounded-lg hover:bg-gray-100 transition">
                 <Icon icon="mdi:cart-outline" class="text-xl text-gray-600" />
@@ -56,10 +62,10 @@
                 <Icon icon="mdi:account-plus" class="text-lg text-white" /> Daftar
               </Link>
             </div>
-            <button @click="toggleTheme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 border-1 border-primary dark:border-primary hover:border-primary dark:hover:border-primary transition">
+            <button @click="toggleTheme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 border-1 border-primary dark:border-primary hover:border-primary dark:hover:border-primary transition cursor-pointer">
               <Icon :icon="isDark ? 'streamline-ultimate:weather-sun' : 'fluent:weather-moon-32-light'" class="text-xl text-primary dark:text-primary" />
             </button>
-            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-lg dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-600 transition bg-primary text-white cursor-pointer">
+            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-lg border-1 border-primary dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-600 transition bg-primary text-white cursor-pointer">
               <Icon :icon="mobileMenu ? 'mdi:close' : 'mdi:menu'" class="text-xl text-white" />
             </button>
           </div>
@@ -70,6 +76,12 @@
       <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
         leave-active-class="transition duration-150" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
         <div v-if="mobileMenu" class="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-4 py-3 space-y-1 shadow-lg absolute w-full left-0 transition-colors duration-300">
+          <form @submit.prevent="submitSearch" class="mb-3 relative">
+            <input v-model="searchQuery" type="text" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary dark:focus:border-primary focus:bg-white dark:focus:bg-gray-900 dark:text-white text-sm transition-all outline-none" />
+            <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Icon icon="mdi:magnify" class="text-lg" />
+            </button>
+          </form>
           <Link v-for="item in navItems" :key="item.href" :href="item.href"
             :class="['block px-4 py-3 rounded-lg text-sm font-medium transition', isActive(item.href) ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800']">
             {{ item.label }}
@@ -150,13 +162,21 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
 const showMenu = ref(false);
 const mobileMenu = ref(false);
 const profileMenu = ref(null);
 const isDark = ref(false);
+const searchQuery = ref('');
+
+function submitSearch() {
+  if (searchQuery.value.trim()) {
+    mobileMenu.value = false;
+    router.get('/produk', { search: searchQuery.value }, { preserveState: true });
+  }
+}
 
 function toggleTheme() {
   isDark.value = !isDark.value;
