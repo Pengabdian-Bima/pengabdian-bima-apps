@@ -2,7 +2,7 @@
   <Head title="Beranda" />
   <UserLayout>
     <!-- Hero Section -->
-    <section class="relative overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+    <section class="relative overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
         <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
@@ -13,19 +13,19 @@
             <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium mb-6">
               <Icon icon="mdi:star" class="text-lg" /> Produk Unggulan Gorontalo
             </div>
-            <h1 class="text-4xl lg:text-6xl font-extrabold text-text leading-tight">
+            <h1 class="text-4xl lg:text-6xl font-extrabold text-text dark:text-white leading-tight">
               Biskuit Ikan
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">Huluu</span>
               <br>Danau Limboto
             </h1>
-            <p class="text-lg text-gray-600 mt-6 leading-relaxed max-w-lg">
+            <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 leading-relaxed max-w-lg">
               Nikmati kelezatan biskuit ikan segar dari Danau Limboto. Kaya protein, berkualitas tinggi, dan dibuat dengan resep tradisional khas Gorontalo.
             </p>
             <div class="flex flex-wrap gap-4 mt-8">
               <Link href="/produk" class="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 flex items-center gap-2">
                 <Icon icon="mdi:shopping" class="text-xl" /> Belanja Sekarang
               </Link>
-              <a href="#keunggulan" class="px-8 py-4 bg-white text-text font-semibold rounded-xl border border-gray-200 hover:border-primary hover:text-primary transition-all duration-300 flex items-center gap-2">
+              <a href="#keunggulan" class="px-8 py-4 bg-white dark:bg-gray-800 text-text dark:text-white font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary transition-all duration-300 flex items-center gap-2">
                 <Icon icon="mdi:information-outline" class="text-xl" /> Pelajari Lebih
               </a>
             </div>
@@ -40,14 +40,14 @@
               </div>
             </div>
             <!-- Floating badge: 100% Alami -->
-            <div class="absolute top-4 -right-2 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3 animate-bounce" style="animation-duration:3s">
+            <div class="absolute top-4 -right-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-black/50 p-4 flex items-center gap-3 animate-bounce" style="animation-duration:3s">
               <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center"><Icon icon="mdi:leaf" class="text-success text-xl" /></div>
-              <div><p class="text-sm font-semibold">100% Alami</p><p class="text-xs text-gray-500">Tanpa Pengawet</p></div>
+              <div><p class="text-sm font-semibold dark:text-white">100% Alami</p><p class="text-xs text-gray-500 dark:text-gray-400">Tanpa Pengawet</p></div>
             </div>
             <!-- Floating badge: BPOM -->
-            <div class="absolute bottom-8 -left-4 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3">
+            <div class="absolute bottom-8 -left-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-black/50 p-4 flex items-center gap-3">
               <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center"><Icon icon="mdi:shield-check" class="text-primary text-xl" /></div>
-              <div><p class="text-sm font-semibold">BPOM Certified</p><p class="text-xs text-gray-500">Aman Dikonsumsi</p></div>
+              <div><p class="text-sm font-semibold dark:text-white">BPOM Certified</p><p class="text-xs text-gray-500 dark:text-gray-400">Aman Dikonsumsi</p></div>
             </div>
           </div>
         </div>
@@ -55,47 +55,47 @@
     </section>
 
     <!-- Keunggulan -->
-    <section id="keunggulan" class="py-20 bg-white">
+    <section id="keunggulan" class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
-          <h2 class="text-3xl font-bold text-text">Keunggulan Produk Kami</h2>
-          <p class="text-gray-500 mt-3 max-w-2xl mx-auto">Biskuit Ikan Huluu Danau Limboto diproduksi dengan standar kualitas tinggi</p>
+          <h2 class="text-3xl font-bold text-text dark:text-white">Keunggulan Produk Kami</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">Biskuit Ikan Huluu Danau Limboto diproduksi dengan standar kualitas tinggi</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          <div v-for="(feat, i) in features" :key="i" class="group p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+          <div v-for="(feat, i) in features" :key="i" class="group p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
             <div :class="['w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 transition-all duration-300 group-hover:scale-110', feat.bgClass]">
               <Icon :icon="feat.icon" :class="['text-xl sm:text-2xl', feat.iconClass]" />
             </div>
-            <h3 class="text-sm sm:text-lg font-semibold text-text mb-1 sm:mb-2">{{ feat.title }}</h3>
-            <p class="text-xs sm:text-sm text-gray-500 leading-relaxed">{{ feat.desc }}</p>
+            <h3 class="text-sm sm:text-lg font-semibold text-text dark:text-white mb-1 sm:mb-2">{{ feat.title }}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{{ feat.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Produk Unggulan -->
-    <section class="py-20 bg-gray-50">
+    <section class="py-20 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-10">
           <div>
-            <h2 class="text-3xl font-bold text-text">Produk Unggulan</h2>
-            <p class="text-gray-500 mt-2">Pilihan terbaik untuk Anda</p>
+            <h2 class="text-3xl font-bold text-text dark:text-white">Produk Unggulan</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Pilihan terbaik untuk Anda</p>
           </div>
           <Link href="/produk" class="hidden sm:flex items-center gap-1 text-primary font-semibold hover:gap-2 transition-all">
             Lihat Semua <Icon icon="mdi:arrow-right" />
           </Link>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          <div v-for="product in products" :key="product.id" class="group bg-white rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 flex flex-col">
-            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 relative overflow-hidden flex items-center justify-center">
+          <div v-for="product in products" :key="product.id" class="group bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl dark:hover:shadow-black/30 hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1 flex flex-col">
+            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 relative overflow-hidden flex items-center justify-center">
               <img v-if="product.thumbnail_url" :src="product.thumbnail_url" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
               <Icon v-else icon="mdi:food-croissant" class="text-4xl sm:text-6xl text-primary/30" />
               <div class="absolute top-2 left-2 sm:top-3 sm:left-3">
-                <span class="px-2 py-0.5 sm:px-3 sm:py-1 bg-white/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-primary">{{ product.category }}</span>
+                <span class="px-2 py-0.5 sm:px-3 sm:py-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-primary">{{ product.category }}</span>
               </div>
             </div>
             <div class="p-3 sm:p-5 flex flex-col flex-1">
-              <h3 class="text-xs sm:text-base font-semibold text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug">{{ product.name }}</h3>
+              <h3 class="text-xs sm:text-base font-semibold text-text dark:text-white group-hover:text-primary transition-colors line-clamp-2 leading-snug">{{ product.name }}</h3>
               <div class="mt-auto pt-2 sm:pt-3">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
                   <p class="text-sm sm:text-xl font-bold text-primary">Rp {{ formatPrice(product.price) }}</p>
@@ -114,25 +114,25 @@
     </section>
 
     <!-- Testimoni -->
-    <section class="py-20 bg-white">
+    <section class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
-          <h2 class="text-3xl font-bold text-text">Apa Kata Mereka?</h2>
-          <p class="text-gray-500 mt-3">Testimoni dari pelanggan setia kami</p>
+          <h2 class="text-3xl font-bold text-text dark:text-white">Apa Kata Mereka?</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-3">Testimoni dari pelanggan setia kami</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div v-for="(t, i) in testimonials" :key="i" class="p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100">
+          <div v-for="(t, i) in testimonials" :key="i" class="p-6 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
             <div class="flex items-center gap-1 mb-3">
               <Icon v-for="s in 5" :key="s" icon="mdi:star" class="text-primary" />
             </div>
-            <p class="text-gray-600 text-sm leading-relaxed mb-4">"{{ t.text }}"</p>
+            <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">"{{ t.text }}"</p>
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center">
                 <span class="text-white text-sm font-bold">{{ t.name.charAt(0) }}</span>
               </div>
               <div>
-                <p class="text-sm font-semibold text-text">{{ t.name }}</p>
-                <p class="text-xs text-gray-500">{{ t.location }}</p>
+                <p class="text-sm font-semibold text-text dark:text-white">{{ t.name }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.location }}</p>
               </div>
             </div>
           </div>

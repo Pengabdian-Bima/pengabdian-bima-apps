@@ -18,3 +18,5 @@
     --color-warning: #f59e0b;
     --color-info: #3b82f6;
 }
+
+@custom-variant dark (&:where(.dark, .dark *));

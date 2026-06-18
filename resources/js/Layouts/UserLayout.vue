@@ -1,20 +1,19 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <!-- Navbar -->
-    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <Link href="/" class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-              <img src="/img/logo-udflamboyan.png" alt="Logo" class="w-full h-full object-contain" />
+            <div class="lg:w-72 h-28 w-42 bg-transparent rounded-xl flex items-center justify-center">
+              <img :src="isDark ? '/img/logo-putih.png' : '/img/logo-hitam.png'" alt="Logo" class="w-full h-full object-contain transition-all duration-300" />
             </div>
-            <span class="text-lg font-bold text-text hidden sm:block">UD Flamboyan</span>
           </Link>
 
           <div class="hidden md:flex items-center gap-1">
             <Link v-for="item in navItems" :key="item.href" :href="item.href"
               :class="['px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                isActive(item.href) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900']">
+                isActive(item.href) ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white']">
               {{ item.label }}
             </Link>
           </div>
@@ -49,12 +48,15 @@
                 </Transition>
               </div>
             </template>
-            <template v-else>
-              <Link href="/login" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition">Masuk</Link>
-              <Link href="/register" class="px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">Daftar</Link>
-            </template>
-            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
-              <Icon :icon="mobileMenu ? 'mdi:close' : 'mdi:menu'" class="text-xl text-gray-600" />
+            <div v-else class="hidden md:flex items-center gap-2">
+              <Link href="/login" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition">Masuk</Link>
+              <Link href="/register" class="px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">Daftar</Link>
+            </div>
+            <button @click="toggleTheme" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
+              <Icon :icon="isDark ? 'mdi:weather-sunny' : 'mdi:weather-night'" class="text-xl text-gray-600 dark:text-gray-300" />
+            </button>
+            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
+              <Icon :icon="mobileMenu ? 'mdi:close' : 'mdi:menu'" class="text-xl text-gray-600 dark:text-gray-300" />
             </button>
           </div>
         </div>
@@ -63,11 +65,17 @@
       <!-- Mobile menu -->
       <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
         leave-active-class="transition duration-150" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
-        <div v-if="mobileMenu" class="md:hidden bg-white border-t border-gray-100 px-4 py-3 space-y-1">
+        <div v-if="mobileMenu" class="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-4 py-3 space-y-1 shadow-lg absolute w-full left-0 transition-colors duration-300">
           <Link v-for="item in navItems" :key="item.href" :href="item.href"
-            :class="['block px-4 py-3 rounded-lg text-sm font-medium transition', isActive(item.href) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-50']">
+            :class="['block px-4 py-3 rounded-lg text-sm font-medium transition', isActive(item.href) ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800']">
             {{ item.label }}
           </Link>
+          <template v-if="!$page.props.auth.user">
+            <div class="pt-2 pb-1 border-t border-gray-100 dark:border-gray-800 mt-2 space-y-2">
+              <Link href="/login" class="block px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-center border border-gray-200 dark:border-gray-700">Masuk</Link>
+              <Link href="/register" class="block px-4 py-3 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-dark text-center">Daftar</Link>
+            </div>
+          </template>
         </div>
       </Transition>
     </nav>
@@ -94,11 +102,10 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center">
-                <Icon icon="mdi:store" class="text-white text-xl" />
+            <div class="flex items-center gap-2 -mb-2">
+              <div class="lg:w-72 h-28 w-42 flex items-center justify-center">
+                <img src="/img/logo-putih.png" alt="Logo" class="w-full h-full object-contain" />
               </div>
-              <span class="text-lg font-bold">UD Flamboyan</span>
             </div>
             <p class="text-gray-400 text-sm leading-relaxed">Produsen Biskuit Ikan Huluu Danau Limboto yang kaya protein dan berkualitas tinggi dari Gorontalo.</p>
           </div>
@@ -141,6 +148,18 @@ import { Icon } from '@iconify/vue';
 const showMenu = ref(false);
 const mobileMenu = ref(false);
 const profileMenu = ref(null);
+const isDark = ref(false);
+
+function toggleTheme() {
+  isDark.value = !isDark.value;
+  if (isDark.value) {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }
+}
 
 const navItems = [
   { href: '/', label: 'Beranda' },
@@ -160,6 +179,17 @@ function handleClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  
+  // Theme initialization
+  if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDark.value = true;
+    document.documentElement.classList.add('dark');
+  } else {
+    isDark.value = false;
+    document.documentElement.classList.remove('dark');
+  }
+});
 onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 </script>

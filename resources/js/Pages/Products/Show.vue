@@ -2,22 +2,22 @@
   <Head :title="product.name" />
   <UserLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <nav class="flex items-center gap-2 text-sm text-gray-500 mb-8">
+      <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8">
         <Link href="/" class="hover:text-primary">Beranda</Link>
         <Icon icon="mdi:chevron-right" />
         <Link href="/produk" class="hover:text-primary">Produk</Link>
         <Icon icon="mdi:chevron-right" />
-        <span class="text-text font-medium">{{ product.name }}</span>
+        <span class="text-text dark:text-white font-medium">{{ product.name }}</span>
       </nav>
 
       <div class="grid lg:grid-cols-2 gap-10">
         <div>
-          <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100">
+          <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800">
             <img v-if="product.thumbnail_url" :src="product.thumbnail_url" :alt="product.name" class="w-full h-full object-cover">
             <Icon v-else icon="mdi:food-croissant" class="text-[100px] text-primary/30" />
           </div>
           <div v-if="product.images?.length" class="flex gap-3 mt-4 overflow-x-auto pb-2">
-            <div v-for="img in product.images" :key="img.id" class="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 flex-shrink-0 cursor-pointer hover:border-primary transition">
+            <div v-for="img in product.images" :key="img.id" class="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 flex-shrink-0 cursor-pointer hover:border-primary transition">
               <img :src="img.url" class="w-full h-full object-cover">
             </div>
           </div>
@@ -25,7 +25,7 @@
 
         <div>
           <span class="inline-block px-3 py-1 bg-primary/10 rounded-full text-sm font-medium text-primary">{{ product.category }}</span>
-          <h1 class="text-3xl font-bold text-text mt-3">{{ product.name }}</h1>
+          <h1 class="text-3xl font-bold text-text dark:text-white mt-3">{{ product.name }}</h1>
 
           <div class="flex items-center gap-4 mt-4">
             <p class="text-3xl font-extrabold text-primary">Rp {{ formatPrice(product.price) }}</p>
@@ -34,22 +34,22 @@
             </span>
           </div>
 
-          <div class="flex items-center gap-6 mt-4 text-sm text-gray-500">
+          <div class="flex items-center gap-6 mt-4 text-sm text-gray-500 dark:text-gray-400">
             <span class="flex items-center gap-1"><Icon icon="mdi:weight" /> {{ product.weight }}g</span>
           </div>
 
-          <div class="border-t border-gray-100 mt-6 pt-6">
-            <h3 class="font-semibold text-text mb-2">Deskripsi</h3>
-            <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ product.description }}</p>
+          <div class="border-t border-gray-100 dark:border-gray-800 mt-6 pt-6">
+            <h3 class="font-semibold text-text dark:text-white mb-2">Deskripsi</h3>
+            <p class="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{{ product.description }}</p>
           </div>
 
-          <div class="border-t border-gray-100 mt-6 pt-6">
+          <div class="border-t border-gray-100 dark:border-gray-800 mt-6 pt-6">
             <div class="flex items-center gap-3">
-              <label class="text-sm font-medium text-gray-700">Jumlah:</label>
-              <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                <button @click="qty > 1 && qty--" class="px-3 py-2 hover:bg-gray-50 transition"><Icon icon="mdi:minus" /></button>
-                <input v-model.number="qty" type="number" min="1" :max="product.stock" class="w-16 text-center border-x border-gray-200 py-2 outline-none">
-                <button @click="qty < product.stock && qty++" class="px-3 py-2 hover:bg-gray-50 transition"><Icon icon="mdi:plus" /></button>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah:</label>
+              <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <button @click="qty > 1 && qty--" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition"><Icon icon="mdi:minus" /></button>
+                <input v-model.number="qty" type="number" min="1" :max="product.stock" class="w-16 text-center border-x border-gray-200 dark:border-gray-700 py-2 outline-none dark:bg-gray-900 dark:text-white">
+                <button @click="qty < product.stock && qty++" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition"><Icon icon="mdi:plus" /></button>
               </div>
             </div>
 
@@ -66,15 +66,15 @@
 
       <!-- Related Products -->
       <div v-if="relatedProducts.length" class="mt-16">
-        <h2 class="text-2xl font-bold text-text mb-6">Produk Terkait</h2>
+        <h2 class="text-2xl font-bold text-text dark:text-white mb-6">Produk Terkait</h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link v-for="p in relatedProducts" :key="p.id" :href="`/produk/${p.slug}`" class="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
-            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+          <Link v-for="p in relatedProducts" :key="p.id" :href="`/produk/${p.slug}`" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 group">
+            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
               <img v-if="p.thumbnail_url" :src="p.thumbnail_url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
               <Icon v-else icon="mdi:food-croissant" class="text-4xl text-primary/30" />
             </div>
             <div class="p-3">
-              <h3 class="text-sm font-semibold text-text truncate">{{ p.name }}</h3>
+              <h3 class="text-sm font-semibold text-text dark:text-white truncate">{{ p.name }}</h3>
               <p class="text-primary font-bold mt-1">Rp {{ formatPrice(p.price) }}</p>
             </div>
           </Link>
