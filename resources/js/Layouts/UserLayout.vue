@@ -49,8 +49,12 @@
               </div>
             </template>
             <div v-else class="hidden md:flex items-center gap-2">
-              <Link href="/login" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition">Masuk</Link>
-              <Link href="/register" class="px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">Daftar</Link>
+              <Link href="/login" class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary dark:text-primary hover:text-primary dark:hover:text-primary transition border border-primary dark:border-primary hover:border-primary dark:hover:border-primary rounded-lg">
+                <Icon icon="mdi:login" class="text-lg text-primary dark:text-primary" /> Masuk
+              </Link>
+              <Link href="/register" class="flex items-center gap-1.5 px-5 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">
+                <Icon icon="mdi:account-plus" class="text-lg text-white" /> Daftar
+              </Link>
             </div>
             <button @click="toggleTheme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 border-1 border-primary dark:border-primary hover:border-primary dark:hover:border-primary transition">
               <Icon :icon="isDark ? 'streamline-ultimate:weather-sun' : 'fluent:weather-moon-32-light'" class="text-xl text-primary dark:text-primary" />
@@ -72,8 +76,12 @@
           </Link>
           <template v-if="!$page.props.auth.user">
             <div class="pt-2 pb-1 border-t border-gray-100 dark:border-gray-800 mt-2 space-y-2">
-              <Link href="/login" class="block px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-center border border-gray-200 dark:border-gray-700">Masuk</Link>
-              <Link href="/register" class="block px-4 py-3 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-dark text-center">Daftar</Link>
+              <Link href="/login" class="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium text-primary dark:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 text-center border border-primary dark:border-primary">
+                <Icon icon="mdi:login" class="text-lg text-primary dark:text-primary" /> Masuk
+              </Link>
+              <Link href="/register" class="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-dark text-center">
+                <Icon icon="mdi:account-plus" class="text-lg text-white" /> Daftar
+              </Link>
             </div>
           </template>
         </div>
@@ -164,6 +172,7 @@ function toggleTheme() {
 const navItems = [
   { href: '/', label: 'Beranda' },
   { href: '/produk', label: 'Produk' },
+  { href: '/artikel', label: 'Artikel' },
 ];
 
 const page = usePage();
