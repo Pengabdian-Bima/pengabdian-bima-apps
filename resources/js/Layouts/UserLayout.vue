@@ -52,11 +52,11 @@
               <Link href="/login" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition">Masuk</Link>
               <Link href="/register" class="px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">Daftar</Link>
             </div>
-            <button @click="toggleTheme" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
-              <Icon :icon="isDark ? 'mdi:weather-sunny' : 'mdi:weather-night'" class="text-xl text-gray-600 dark:text-gray-300" />
+            <button @click="toggleTheme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 border-1 border-primary dark:border-primary hover:border-primary dark:hover:border-primary transition">
+              <Icon :icon="isDark ? 'streamline-ultimate:weather-sun' : 'fluent:weather-moon-32-light'" class="text-xl text-primary dark:text-primary" />
             </button>
-            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
-              <Icon :icon="mobileMenu ? 'mdi:close' : 'mdi:menu'" class="text-xl text-gray-600 dark:text-gray-300" />
+            <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-lg dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-600 transition bg-primary text-white cursor-pointer">
+              <Icon :icon="mobileMenu ? 'mdi:close' : 'mdi:menu'" class="text-xl text-white" />
             </button>
           </div>
         </div>

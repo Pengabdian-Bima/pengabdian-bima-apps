@@ -8,12 +8,9 @@
     <!-- Sidebar -->
     <aside :class="['fixed inset-y-0 left-0 z-40 bg-gray-900 text-white transition-all duration-300 flex flex-col', sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20']">
       <div class="flex items-center gap-3 h-16 px-4 border-b border-gray-800">
-        <div class="w-10 h-10 bg-transparent rounded-xl flex items-center justify-center flex-shrink-0">
-          <img src="/img/logo-udflamboyan.png" alt="Logo" class="w-full h-full object-contain" />
+        <div class="lg:w-52 lg:h-10 h-8 w-8 bg-transparent rounded-xl flex items-center justify-center flex-shrink-0">
+          <img src="/img/logo-putih.png" alt="Logo" class="w-full h-full object-contain" />
         </div>
-        <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100">
-          <span v-if="sidebarOpen" class="text-lg font-bold whitespace-nowrap">UD Flamboyan</span>
-        </Transition>
       </div>
 
       <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
@@ -35,7 +32,7 @@
           <span v-if="sidebarOpen">Edit Profil</span>
         </Link>
         <button @click="showLogoutModal = true"
-          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
+          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 cursor-pointer">
           <Icon icon="mdi:logout" class="text-xl flex-shrink-0" />
           <span v-if="sidebarOpen">Keluar</span>
         </button>
@@ -46,8 +43,8 @@
     <div :class="['flex-1 transition-all duration-300 min-w-0 flex flex-col', sidebarOpen ? 'lg:ml-64' : 'lg:ml-20']">
       <!-- Top bar -->
       <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100 h-16 flex items-center justify-between px-6">
-        <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 transition">
-          <Icon :icon="sidebarOpen ? 'mdi:menu-open' : 'mdi:menu'" class="text-xl text-gray-600" />
+        <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 transition border border-primary text-primary">
+          <Icon :icon="sidebarOpen ? 'mdi:menu-open' : 'mdi:menu'" class="text-xl text-primary" />
         </button>
         <div class="flex items-center gap-3">
           <div class="text-right hidden sm:block">
@@ -89,7 +86,7 @@
             <p class="text-sm text-gray-500 mt-2">Apakah Anda yakin ingin mengakhiri sesi ini?</p>
             <div class="flex gap-3 mt-6">
               <button @click="showLogoutModal = false" class="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition">Batal</button>
-              <Link href="/logout" method="post" as="button" class="flex-1 py-2.5 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition">Ya, Keluar</Link>
+              <Link href="/logout" method="post" as="button" class="flex-1 py-2.5 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition cursor-pointer">Ya, Keluar</Link>
             </div>
           </div>
         </Transition>
