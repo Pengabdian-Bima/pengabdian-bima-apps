@@ -63,30 +63,58 @@
                   <label class="block text-sm font-medium text-gray-700 mb-1">No. HP *</label>
                   <input v-model="form.shipping_phone" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="08xxxxxxxxxx">
                 </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
-                  <input v-model="form.shipping_province" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Kabupaten/Kota</label>
-                  <input v-model="form.shipping_city" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
-                  <input v-model="form.shipping_district" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Desa/Kelurahan</label>
-                  <input v-model="form.shipping_village" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Kode Pos</label>
-                  <input v-model="form.shipping_postal_code" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+                <div class="sm:col-span-2 relative">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Alamat (Cari Provinsi, Kota/Kab, Kecamatan, Kode Pos) *</label>
+                  <div class="relative">
+                    <input 
+                      type="text" 
+                      v-model="manualSearchQuery" 
+                      @input="searchManualAddress" 
+                      @focus="manualShowDropdown = true"
+                      @blur="handleManualBlur"
+                      required 
+                      class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" 
+                      placeholder="Masukkan alamat (misal: Joglo, Kebon Jeruk, 11640)..."
+                      autocomplete="off"
+                    >
+                    <!-- Clear button -->
+                    <button 
+                      v-if="manualSearchQuery" 
+                      type="button" 
+                      @click="clearManualAddressSelection" 
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <Icon icon="mdi:close-circle" class="text-lg" />
+                    </button>
+                  </div>
+                  
+                  <!-- Autocomplete Dropdown List -->
+                  <div v-if="manualShowDropdown && manualSearchResults.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div 
+                      v-for="(result, index) in manualSearchResults" 
+                      :key="index" 
+                      @mousedown="selectManualLocation(result)"
+                      class="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b last:border-0"
+                    >
+                      {{ result.label }}
+                    </div>
+                  </div>
+                  <div v-else-if="manualShowDropdown && manualSearching" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center text-sm text-gray-500">
+                    <span class="flex items-center justify-center gap-2 text-xs">
+                      <Icon icon="mdi:loading" class="animate-spin text-primary" /> Mencari alamat...
+                    </span>
+                  </div>
+                  <p v-if="manualAddressValidationError" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                    <Icon icon="mdi:alert-circle" /> Alamat wilayah pengiriman wajib dicari dan dipilih dari hasil pencarian.
+                  </p>
                 </div>
               </div>
               <div class="mt-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap *</label>
-                <textarea v-model="form.shipping_address" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <textarea v-model="form.shipping_address" @input="manualAddressDetailValidationError = false" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <p v-if="manualAddressDetailValidationError || form.errors.shipping_address" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Alamat lengkap (jalan, nomor rumah, RT/RW, dsb.) wajib diisi.
+                </p>
               </div>
             </div>
             
@@ -94,6 +122,61 @@
             <div class="mt-4">
               <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Pesanan (Opsional)</label>
               <textarea v-model="form.notes" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none" placeholder="Catatan untuk penjual..."></textarea>
+            </div>
+          </div>
+
+          <!-- Courier Selection Section (Shopee-like) -->
+          <div v-if="selectedAddress || (form.shipping_address && form.shipping_city_id)" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+              <Icon icon="mdi:truck-delivery-outline" class="text-primary text-2xl" /> Opsi Pengiriman
+            </h2>
+
+            <div class="grid grid-cols-3 gap-4">
+              <!-- Courier options JNE, POS, TIKI -->
+              <label 
+                v-for="c in ['jne', 'pos', 'tiki']" 
+                :key="c" 
+                :class="['flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all justify-center', form.courier === c ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']"
+              >
+                <input type="radio" :value="c" v-model="form.courier" @change="calculateShippingCost" class="sr-only">
+                <div :class="['w-5 h-5 rounded-full border flex items-center justify-center shrink-0', form.courier === c ? 'border-primary' : 'border-gray-300']">
+                  <div v-if="form.courier === c" class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                </div>
+                <span class="font-bold text-text uppercase">{{ c }}</span>
+              </label>
+            </div>
+
+            <!-- Courier Services -->
+            <div v-if="loadingShipping" class="mt-6 p-4 text-center text-sm text-gray-500">
+              <Icon icon="mdi:loading" class="animate-spin text-primary text-xl mx-auto mb-2" />
+              Mencari layanan pengiriman...
+            </div>
+            
+            <div v-else-if="shippingServices.length > 0" class="mt-6 space-y-3">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Layanan Pengiriman:</label>
+              <div class="grid grid-cols-1 gap-2">
+                <label 
+                  v-for="service in shippingServices" 
+                  :key="service.service" 
+                  :class="['flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all', form.courier_service === service.service ? 'border-primary bg-primary/[0.01]' : 'border-gray-100 hover:border-gray-200']"
+                >
+                  <input type="radio" :value="service.service" v-model="form.courier_service" @change="selectShippingService(service)" class="sr-only">
+                  <div class="flex items-center gap-3">
+                    <div :class="['w-4 h-4 rounded-full border flex items-center justify-center shrink-0', form.courier_service === service.service ? 'border-primary' : 'border-gray-300']">
+                      <div v-if="form.courier_service === service.service" class="w-2 h-2 rounded-full bg-primary"></div>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-text text-sm">{{ service.service }}</span>
+                      <span class="text-xs text-gray-400 block">{{ service.description }} (Estimasi: {{ service.cost[0].etd }} hari)</span>
+                    </div>
+                  </div>
+                  <span class="font-bold text-primary text-sm">Rp {{ formatPrice(service.cost[0].value) }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div v-else-if="form.courier" class="mt-6 p-4 bg-yellow-50 text-yellow-800 rounded-xl text-xs">
+              Tidak ada layanan pengiriman yang tersedia untuk kurir ini. Silakan pilih kurir lain atau cek kembali alamat Anda.
             </div>
           </div>
 
@@ -180,9 +263,28 @@
             </div>
             
             <hr class="my-4 border-gray-100">
+            <div class="flex justify-between text-sm text-gray-600">
+              <span>Subtotal Produk</span>
+              <span class="font-medium text-text">Rp {{ formatPrice(total) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600 mt-2">
+              <span>Ongkos Kirim</span>
+              <span class="font-medium text-text">
+                <template v-if="shippingCost > 0">
+                  Rp {{ formatPrice(shippingCost) }}
+                </template>
+                <template v-else-if="loadingShipping">
+                  Menghitung...
+                </template>
+                <template v-else>
+                  Rp 0
+                </template>
+              </span>
+            </div>
+            <hr class="my-4 border-gray-100">
             <div class="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span class="text-primary">Rp {{ formatPrice(total) }}</span>
+              <span class="text-primary">Rp {{ formatPrice(total + shippingCost) }}</span>
             </div>
 
             <!-- Error Messages Debug -->
@@ -273,33 +375,71 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">No. HP Penerima *</label>
                 <input v-model="newAddressForm.phone" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="08xxxxxxxxxx">
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
-                <input v-model="newAddressForm.province" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kota / Kabupaten</label>
-                <input v-model="newAddressForm.city" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
-                <input v-model="newAddressForm.district" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kelurahan / Desa</label>
-                <input v-model="newAddressForm.village" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kode Pos</label>
-                <input v-model="newAddressForm.postal_code" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+              <div class="col-span-2 relative">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat (Cari Provinsi, Kota/Kab, Kecamatan, Kode Pos) *</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    v-model="modalSearchQuery" 
+                    @input="searchModalAddress" 
+                    @focus="modalShowDropdown = true"
+                    @blur="handleModalBlur"
+                    required 
+                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" 
+                    placeholder="Masukkan alamat (misal: Joglo, Kebon Jeruk, 11640)..."
+                    autocomplete="off"
+                  >
+                  <!-- Clear button -->
+                  <button 
+                    v-if="modalSearchQuery" 
+                    type="button" 
+                    @click="clearModalAddressSelection" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <Icon icon="mdi:close-circle" class="text-lg" />
+                  </button>
+                </div>
+                
+                <!-- Autocomplete Dropdown List -->
+                <div v-if="modalShowDropdown && modalSearchResults.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  <div 
+                    v-for="(result, index) in modalSearchResults" 
+                    :key="index" 
+                    @mousedown="selectModalLocation(result)"
+                    class="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b last:border-0"
+                  >
+                    {{ result.label }}
+                  </div>
+                </div>
+                <div v-else-if="modalShowDropdown && modalSearching" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center text-sm text-gray-500">
+                  <span class="flex items-center justify-center gap-2 text-xs">
+                    <Icon icon="mdi:loading" class="animate-spin text-primary" /> Mencari alamat...
+                  </span>
+                </div>
+                <p v-if="modalAddressValidationError" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Alamat wilayah wajib dicari dan dipilih dari hasil pencarian.
+                </p>
               </div>
               <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap *</label>
-                <textarea v-model="newAddressForm.address" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <textarea v-model="newAddressForm.address" @input="modalAddressDetailValidationError = false" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <p v-if="modalAddressDetailValidationError || newAddressForm.errors.address" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Alamat lengkap (jalan, nomor rumah, RT/RW, dsb.) wajib diisi.
+                </p>
               </div>
               <div class="col-span-2 flex items-center gap-2 py-2">
                 <input type="checkbox" v-model="newAddressForm.is_default" id="checkout_is_default" class="w-4.5 h-4.5 text-primary focus:ring-primary border-gray-300 rounded">
                 <label for="checkout_is_default" class="text-sm font-medium text-gray-700 select-none cursor-pointer">Atur sebagai alamat utama</label>
+              </div>
+
+              <!-- Error Messages Debug -->
+              <div v-if="Object.keys(newAddressForm.errors).length > 0" class="col-span-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-700 text-xs">
+                <p class="font-semibold mb-1 flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Harap perbaiki kesalahan berikut:
+                </p>
+                <ul class="list-disc pl-4 space-y-0.5">
+                  <li v-for="(error, key) in newAddressForm.errors" :key="key">{{ error }}</li>
+                </ul>
               </div>
             </div>
 
@@ -335,6 +475,10 @@ const props = defineProps({
 const showAddressListModal = ref(false);
 const showNewAddressModal = ref(false);
 const selectedAddress = ref(null);
+const manualAddressValidationError = ref(false);
+const modalAddressValidationError = ref(false);
+const manualAddressDetailValidationError = ref(false);
+const modalAddressDetailValidationError = ref(false);
 
 const form = useForm({
   address_id: null,
@@ -344,10 +488,14 @@ const form = useForm({
   shipping_address: '',
   shipping_province: '',
   shipping_city: '',
+  shipping_city_id: '',
   shipping_district: '',
   shipping_village: '',
   shipping_postal_code: '',
   notes: '',
+  courier: '',
+  courier_service: '',
+  shipping_cost: 0,
 });
 
 const newAddressForm = useForm({
@@ -357,11 +505,186 @@ const newAddressForm = useForm({
   address: '',
   province: '',
   city: '',
+  city_id: '',
   district: '',
   village: '',
   postal_code: '',
   is_default: true,
 });
+
+// Manual address autocomplete refs
+const manualSearchQuery = ref('');
+const manualSearchResults = ref([]);
+const manualSearching = ref(false);
+const manualShowDropdown = ref(false);
+let manualSearchTimeout = null;
+
+function searchManualAddress() {
+  if (manualSearchTimeout) clearTimeout(manualSearchTimeout);
+  if (manualSearchQuery.value.length < 2) {
+    manualSearchResults.value = [];
+    return;
+  }
+  manualSearching.value = true;
+  manualShowDropdown.value = true;
+  manualSearchTimeout = setTimeout(async () => {
+    try {
+      const response = await axios.get('/api/locations/search', {
+        params: { q: manualSearchQuery.value }
+      });
+      manualSearchResults.value = response.data;
+    } catch (e) {
+      console.error("Gagal mencari alamat manual:", e);
+    } finally {
+      manualSearching.value = false;
+    }
+  }, 300);
+}
+
+function selectManualLocation(result) {
+  form.shipping_province = result.province;
+  form.shipping_city = result.city;
+  form.shipping_city_id = result.city_id;
+  form.shipping_district = result.district;
+  form.shipping_village = result.village;
+  form.shipping_postal_code = result.postal_code;
+  
+  manualSearchQuery.value = result.label;
+  manualShowDropdown.value = false;
+  
+  calculateShippingCost();
+}
+
+function clearManualAddressSelection() {
+  manualSearchQuery.value = '';
+  form.shipping_province = '';
+  form.shipping_city = '';
+  form.shipping_city_id = '';
+  form.shipping_district = '';
+  form.shipping_village = '';
+  form.shipping_postal_code = '';
+  manualSearchResults.value = [];
+  shippingCost.value = 0;
+  shippingServices.value = [];
+}
+
+function handleManualBlur() {
+  setTimeout(() => {
+    manualShowDropdown.value = false;
+  }, 250);
+}
+
+// Modal address autocomplete refs
+const modalSearchQuery = ref('');
+const modalSearchResults = ref([]);
+const modalSearching = ref(false);
+const modalShowDropdown = ref(false);
+let modalSearchTimeout = null;
+
+function searchModalAddress() {
+  if (modalSearchTimeout) clearTimeout(modalSearchTimeout);
+  if (modalSearchQuery.value.length < 2) {
+    modalSearchResults.value = [];
+    return;
+  }
+  modalSearching.value = true;
+  modalShowDropdown.value = true;
+  modalSearchTimeout = setTimeout(async () => {
+    try {
+      const response = await axios.get('/api/locations/search', {
+        params: { q: modalSearchQuery.value }
+      });
+      modalSearchResults.value = response.data;
+    } catch (e) {
+      console.error("Gagal mencari alamat modal:", e);
+    } finally {
+      modalSearching.value = false;
+    }
+  }, 300);
+}
+
+function selectModalLocation(result) {
+  newAddressForm.province = result.province;
+  newAddressForm.city = result.city;
+  newAddressForm.city_id = result.city_id;
+  newAddressForm.district = result.district;
+  newAddressForm.village = result.village;
+  newAddressForm.postal_code = result.postal_code;
+  
+  modalSearchQuery.value = result.label;
+  modalShowDropdown.value = false;
+}
+
+function clearModalAddressSelection() {
+  modalSearchQuery.value = '';
+  newAddressForm.province = '';
+  newAddressForm.city = '';
+  newAddressForm.city_id = '';
+  newAddressForm.district = '';
+  newAddressForm.village = '';
+  newAddressForm.postal_code = '';
+  modalSearchResults.value = [];
+}
+
+function handleModalBlur() {
+  setTimeout(() => {
+    modalShowDropdown.value = false;
+  }, 250);
+}
+
+// Shipping Cost refs & logic
+const shippingCost = ref(0);
+const shippingServices = ref([]);
+const loadingShipping = ref(false);
+
+const totalWeight = computed(() => {
+  return props.items.reduce((sum, item) => sum + ((item.weight || 200) * item.qty), 0);
+});
+
+async function calculateShippingCost() {
+  const cityId = selectedAddress.value ? selectedAddress.value.city_id : form.shipping_city_id;
+  
+  if (!cityId || !form.courier) {
+    shippingCost.value = 0;
+    shippingServices.value = [];
+    return;
+  }
+  
+  loadingShipping.value = true;
+  shippingServices.value = [];
+  
+  try {
+    const response = await axios.post('/api/shipping-cost', {
+      destination_city_id: cityId,
+      weight: totalWeight.value,
+      courier: form.courier
+    });
+    
+    if (response.data && response.data.length > 0) {
+      shippingServices.value = response.data[0].costs || [];
+      
+      if (shippingServices.value.length > 0) {
+        const regService = shippingServices.value.find(s => s.service === 'REG' || s.service.includes('Reguler')) || shippingServices.value[0];
+        selectShippingService(regService);
+      } else {
+        form.courier_service = '';
+        form.shipping_cost = 0;
+        shippingCost.value = 0;
+      }
+    }
+  } catch (e) {
+    console.error("Gagal menghitung ongkir:", e);
+  } finally {
+    loadingShipping.value = false;
+  }
+}
+
+function selectShippingService(service) {
+  form.courier_service = service.service;
+  const cost = service.cost[0]?.value || 0;
+  form.shipping_cost = cost;
+  shippingCost.value = cost;
+}
 
 function formatPrice(p) {
   return Number(p).toLocaleString('id-ID');
@@ -370,24 +693,58 @@ function formatPrice(p) {
 function selectAddress(addr) {
   selectedAddress.value = addr;
   form.address_id = addr.id;
+  
+  form.shipping_name = addr.recipient_name;
+  form.shipping_phone = addr.phone;
+  form.shipping_address = addr.address;
+  form.shipping_province = addr.province;
+  form.shipping_city = addr.city;
+  form.shipping_city_id = addr.city_id;
+  form.shipping_district = addr.district;
+  form.shipping_village = addr.village;
+  form.shipping_postal_code = addr.postal_code;
+  
   showAddressListModal.value = false;
+  calculateShippingCost();
 }
 
 function openNewAddressModal() {
   newAddressForm.reset();
   newAddressForm.recipient_name = props.user?.name || '';
   newAddressForm.phone = props.user?.phone || '';
+  modalSearchQuery.value = '';
+  modalSearchResults.value = [];
+  modalAddressValidationError.value = false;
+  modalAddressDetailValidationError.value = false;
   showAddressListModal.value = false;
   showNewAddressModal.value = true;
 }
 
 function submitNewAddress() {
+  let hasError = false;
+
+  if (!newAddressForm.city_id) {
+    modalAddressValidationError.value = true;
+    hasError = true;
+  } else {
+    modalAddressValidationError.value = false;
+  }
+
+  if (!newAddressForm.address || !newAddressForm.address.trim()) {
+    modalAddressDetailValidationError.value = true;
+    hasError = true;
+  } else {
+    modalAddressDetailValidationError.value = false;
+  }
+
+  if (hasError) {
+    return;
+  }
+
   newAddressForm.post('/alamat', {
     onSuccess: (page) => {
       showNewAddressModal.value = false;
-      // Auto select the newly added address (which will be first/latest)
       if (props.addresses.length > 0) {
-        // Safe check for latest address
         const latest = props.addresses[0];
         if (latest) {
           selectAddress(latest);
@@ -398,6 +755,38 @@ function submitNewAddress() {
 }
 
 function submit() {
+  if (!form.address_id) {
+    let hasError = false;
+
+    if (!form.shipping_city_id) {
+      manualAddressValidationError.value = true;
+      hasError = true;
+    } else {
+      manualAddressValidationError.value = false;
+    }
+
+    if (!form.shipping_address || !form.shipping_address.trim()) {
+      manualAddressDetailValidationError.value = true;
+      hasError = true;
+    } else {
+      manualAddressDetailValidationError.value = false;
+    }
+
+    if (hasError) {
+      // Smooth scroll to manual address warning
+      setTimeout(() => {
+        const warningElement = document.querySelector('.text-danger');
+        if (warningElement) {
+          warningElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return;
+    }
+  } else {
+    manualAddressValidationError.value = false;
+    manualAddressDetailValidationError.value = false;
+  }
+
   console.log("Submitting checkout form...", form.data());
   form.post('/checkout', {
     onBefore: () => console.log("Inertia onBefore triggered"),

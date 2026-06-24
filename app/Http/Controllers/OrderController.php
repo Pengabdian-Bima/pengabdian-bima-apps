@@ -78,20 +78,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function uploadPayment(Order $order)
-    {
-        if ($order->user_id !== auth()->id()) {
-            abort(403);
-        }
 
-        return Inertia::render('Orders/UploadPayment', [
-            'order' => [
-                'id' => $order->id,
-                'order_code' => $order->order_code,
-                'total_amount' => $order->total_amount,
-            ],
-        ]);
-    }
 
     public function storePayment(Request $request, Order $order)
     {
@@ -99,24 +86,70 @@ class OrderController extends Controller
             abort(403);
         }
 
+        if (!in_array($order->status, ['menunggu_pembayaran', 'menunggu_verifikasi', 'ditolak'])) {
+            return back()->with('error', 'Pesanan ini tidak dapat diupload bukti pembayarannya.');
+        }
+
         $request->validate([
-            'sender_name' => 'required|string|max:255',
-            'sender_bank' => 'required|string|max:100',
-            'amount' => 'required|numeric|min:1',
-            'transfer_date' => 'required|date',
+            'sender_name' => 'nullable|string|max:255',
+            'sender_bank' => 'nullable|string|max:100',
+            'amount' => 'nullable|numeric|min:1',
+            'transfer_date' => 'nullable|date',
             'proof_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
+        // If the order was rejected, validate stock and decrement it again before proceeding
+        if ($order->status === 'ditolak') {
+            foreach ($order->items as $item) {
+                if ($item->qty > $item->product->stock) {
+                    return back()->with('error', "Stok produk {$item->product->name} tidak mencukupi untuk memproses ulang pesanan ini.");
+                }
+            }
+
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                $stockBefore = $product->stock;
+                $product->decrement('stock', $item->qty);
+
+                \App\Models\StockHistory::create([
+                    'product_id' => $product->id,
+                    'type' => 'out',
+                    'quantity' => $item->qty,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $product->stock,
+                    'note' => "Pembayaran ulang Pesanan #{$order->order_code}",
+                ]);
+            }
+        }
+
         $path = $request->file('proof_image')->store('payment-proofs', 'public');
 
-        PaymentConfirmation::create([
-            'order_id' => $order->id,
-            'sender_name' => $request->sender_name,
-            'sender_bank' => $request->sender_bank,
-            'amount' => $request->amount,
-            'transfer_date' => $request->transfer_date,
-            'proof_image' => $path,
-        ]);
+        $paymentConfirmation = PaymentConfirmation::where('order_id', $order->id)->first();
+
+        if ($paymentConfirmation) {
+            if ($paymentConfirmation->proof_image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($paymentConfirmation->proof_image);
+            }
+
+            $paymentConfirmation->update([
+                'sender_name' => $request->sender_name ?? auth()->user()->name ?? $paymentConfirmation->sender_name,
+                'sender_bank' => $request->sender_bank ?? ($order->payment_method === 'qris' ? 'QRIS' : 'Transfer Manual'),
+                'amount' => $request->amount ?? $order->total_amount,
+                'transfer_date' => $request->transfer_date ?? now()->toDateString(),
+                'proof_image' => $path,
+                'status' => 'pending',
+            ]);
+        } else {
+            PaymentConfirmation::create([
+                'order_id' => $order->id,
+                'sender_name' => $request->sender_name ?? auth()->user()->name ?? 'Pembeli',
+                'sender_bank' => $request->sender_bank ?? ($order->payment_method === 'qris' ? 'QRIS' : 'Transfer Manual'),
+                'amount' => $request->amount ?? $order->total_amount,
+                'transfer_date' => $request->transfer_date ?? now()->toDateString(),
+                'proof_image' => $path,
+                'status' => 'pending',
+            ]);
+        }
 
         $order->update(['status' => 'menunggu_verifikasi']);
 

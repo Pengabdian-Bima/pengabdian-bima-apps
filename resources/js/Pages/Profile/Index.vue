@@ -143,33 +143,71 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">No. Handphone Penerima *</label>
                 <input v-model="addressForm.phone" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="08xxxxxxxxxx">
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
-                <input v-model="addressForm.province" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kota / Kabupaten</label>
-                <input v-model="addressForm.city" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
-                <input v-model="addressForm.district" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kelurahan / Desa</label>
-                <input v-model="addressForm.village" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
-              </div>
-              <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kode Pos</label>
-                <input v-model="addressForm.postal_code" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+              <div class="col-span-2 relative">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat (Cari Provinsi, Kota/Kab, Kecamatan, Kode Pos) *</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    v-model="addressSearchQuery" 
+                    @input="searchAddress" 
+                    @focus="showDropdown = true"
+                    @blur="handleBlur"
+                    required 
+                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" 
+                    placeholder="Masukkan alamat (misal: Joglo, Kebon Jeruk, 11640)..."
+                    autocomplete="off"
+                  >
+                  <!-- Clear button -->
+                  <button 
+                    v-if="addressSearchQuery" 
+                    type="button" 
+                    @click="clearAddressSelection" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <Icon icon="mdi:close-circle" class="text-lg" />
+                  </button>
+                </div>
+                
+                <!-- Autocomplete Dropdown List -->
+                <div v-if="showDropdown && searchResults.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  <div 
+                    v-for="(result, index) in searchResults" 
+                    :key="index" 
+                    @mousedown="selectLocation(result)"
+                    class="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b last:border-0"
+                  >
+                    {{ result.label }}
+                  </div>
+                </div>
+                <div v-else-if="showDropdown && searching" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center text-sm text-gray-500">
+                  <span class="flex items-center justify-center gap-2 text-xs">
+                    <Icon icon="mdi:loading" class="animate-spin text-primary" /> Mencari alamat...
+                  </span>
+                </div>
+                <p v-if="addressValidationError" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Alamat wilayah wajib dicari dan dipilih dari hasil pencarian.
+                </p>
               </div>
               <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap (Jalan, No Rumah, RT/RW, dsb.) *</label>
-                <textarea v-model="addressForm.address" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <textarea v-model="addressForm.address" @input="addressDetailValidationError = false" required rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                <p v-if="addressDetailValidationError || addressForm.errors.address" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Alamat lengkap (jalan, nomor rumah, RT/RW, dsb.) wajib diisi.
+                </p>
               </div>
               <div class="col-span-2 flex items-center gap-2 py-2">
                 <input type="checkbox" v-model="addressForm.is_default" id="is_default" class="w-4.5 h-4.5 text-primary focus:ring-primary border-gray-300 rounded">
                 <label for="is_default" class="text-sm font-medium text-gray-700 select-none cursor-pointer">Atur sebagai alamat utama</label>
+              </div>
+
+              <!-- Error Messages Debug -->
+              <div v-if="Object.keys(addressForm.errors).length > 0" class="col-span-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-700 text-xs">
+                <p class="font-semibold mb-1 flex items-center gap-1">
+                  <Icon icon="mdi:alert-circle" /> Harap perbaiki kesalahan berikut:
+                </p>
+                <ul class="list-disc pl-4 space-y-0.5">
+                  <li v-for="(error, key) in addressForm.errors" :key="key">{{ error }}</li>
+                </ul>
               </div>
             </div>
 
@@ -220,10 +258,20 @@ function submitPassword() {
   });
 }
 
+import axios from 'axios';
+
 // Address Management
 const showModal = ref(false);
 const isEdit = ref(false);
 const currentAddressId = ref(null);
+const addressValidationError = ref(false);
+const addressDetailValidationError = ref(false);
+
+const addressSearchQuery = ref('');
+const searchResults = ref([]);
+const searching = ref(false);
+const showDropdown = ref(false);
+let searchTimeout = null;
 
 const addressForm = useForm({
   label: '',
@@ -232,11 +280,66 @@ const addressForm = useForm({
   address: '',
   province: '',
   city: '',
+  city_id: '',
   district: '',
   village: '',
   postal_code: '',
   is_default: false,
 });
+
+function searchAddress() {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  
+  if (addressSearchQuery.value.length < 2) {
+    searchResults.value = [];
+    return;
+  }
+  
+  searching.value = true;
+  showDropdown.value = true;
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const response = await axios.get('/api/locations/search', {
+        params: { q: addressSearchQuery.value }
+      });
+      searchResults.value = response.data;
+    } catch (e) {
+      console.error("Gagal mencari alamat:", e);
+    } finally {
+      searching.value = false;
+    }
+  }, 300);
+}
+
+function selectLocation(result) {
+  addressForm.province = result.province;
+  addressForm.city = result.city;
+  addressForm.city_id = result.city_id;
+  addressForm.district = result.district;
+  addressForm.village = result.village;
+  addressForm.postal_code = result.postal_code;
+  
+  addressSearchQuery.value = result.label;
+  showDropdown.value = false;
+}
+
+function clearAddressSelection() {
+  addressSearchQuery.value = '';
+  addressForm.province = '';
+  addressForm.city = '';
+  addressForm.city_id = '';
+  addressForm.district = '';
+  addressForm.village = '';
+  addressForm.postal_code = '';
+  searchResults.value = [];
+}
+
+function handleBlur() {
+  setTimeout(() => {
+    showDropdown.value = false;
+  }, 250);
+}
 
 function openAddModal() {
   isEdit.value = false;
@@ -245,6 +348,9 @@ function openAddModal() {
   addressForm.label = 'Rumah';
   addressForm.recipient_name = props.user.name;
   addressForm.phone = props.user.phone || '';
+  addressSearchQuery.value = '';
+  addressValidationError.value = false;
+  addressDetailValidationError.value = false;
   showModal.value = true;
 }
 
@@ -257,19 +363,55 @@ function openEditModal(address) {
   addressForm.address = address.address;
   addressForm.province = address.province || '';
   addressForm.city = address.city || '';
+  addressForm.city_id = address.city_id || '';
   addressForm.district = address.district || '';
   addressForm.village = address.village || '';
   addressForm.postal_code = address.postal_code || '';
   addressForm.is_default = address.is_default;
+  addressValidationError.value = false;
+  addressDetailValidationError.value = false;
+  
+  addressSearchQuery.value = [
+    address.village,
+    address.district,
+    address.city,
+    address.province,
+    address.postal_code
+  ].filter(Boolean).join(', ');
+  
   showModal.value = true;
 }
 
 function closeModal() {
   showModal.value = false;
   addressForm.reset();
+  addressSearchQuery.value = '';
+  searchResults.value = [];
+  addressValidationError.value = false;
+  addressDetailValidationError.value = false;
 }
 
 function submitAddress() {
+  let hasError = false;
+
+  if (!addressForm.city_id) {
+    addressValidationError.value = true;
+    hasError = true;
+  } else {
+    addressValidationError.value = false;
+  }
+
+  if (!addressForm.address || !addressForm.address.trim()) {
+    addressDetailValidationError.value = true;
+    hasError = true;
+  } else {
+    addressDetailValidationError.value = false;
+  }
+
+  if (hasError) {
+    return;
+  }
+
   if (isEdit.value) {
     addressForm.put(`/alamat/${currentAddressId.value}`, {
       onSuccess: () => closeModal(),

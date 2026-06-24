@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'rajaongkir' => [
+        'api_key' => env('RAJAONGKIR_API_KEY'),
+        'package' => env('RAJAONGKIR_PACKAGE', 'starter'), // starter, basic, pro
+        'origin' => env('RAJAONGKIR_ORIGIN', 128), // default Gorontalo
+    ],
+
 ];

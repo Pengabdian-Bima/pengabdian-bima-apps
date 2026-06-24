@@ -45,6 +45,14 @@
               </span>
             </div>
 
+            <div v-if="order.status === 'ditolak'" class="mb-4 p-3 bg-red-50 border border-red-100 text-danger text-xs rounded-xl flex items-start gap-2">
+              <Icon icon="mdi:alert-circle-outline" class="text-lg shrink-0 mt-0.5" />
+              <div>
+                <p class="font-semibold">Bukti Pembayaran Ditolak</p>
+                <p class="mt-0.5 text-gray-600">Admin menolak bukti transfer Anda. Silakan periksa kembali detail pembayaran dan upload ulang bukti transfer yang valid.</p>
+              </div>
+            </div>
+
             <div v-if="order.payment" class="text-sm space-y-2 bg-gray-50 p-4 rounded-xl">
               <div class="flex justify-between"><span class="text-gray-500">Pengirim:</span><span class="font-medium text-text">{{ order.payment.sender_name }}</span></div>
               <div class="flex justify-between"><span class="text-gray-500">Bank/E-Wallet:</span><span class="font-medium text-text">{{ order.payment.sender_bank }}</span></div>
@@ -53,6 +61,13 @@
               <div class="pt-2">
                 <span class="text-xs font-medium text-gray-400 block mb-1">Bukti Transfer:</span>
                 <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border border-gray-100 hover:scale-105 transition duration-300">
+              </div>
+              <div v-if="['menunggu_verifikasi', 'ditolak'].includes(order.status)" class="pt-3 border-t border-gray-200/50 mt-3">
+                <button @click="triggerFileInput" :disabled="uploadForm.processing" class="w-full py-2 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-50">
+                  <Icon v-if="uploadForm.processing" icon="mdi:loading" class="animate-spin" />
+                  <Icon v-else :icon="order.status === 'ditolak' ? 'mdi:upload' : 'mdi:swap-horizontal'" />
+                  {{ uploadForm.processing ? 'Mengupload...' : (order.status === 'ditolak' ? 'Upload Ulang Bukti Pembayaran' : 'Ganti Bukti Pembayaran') }}
+                </button>
               </div>
             </div>
             
@@ -94,9 +109,11 @@
                 </div>
               </div>
 
-              <Link :href="`/pesanan/${order.id}/bayar`" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all">
-                <Icon icon="mdi:upload" /> Upload Bukti Pembayaran
-              </Link>
+              <button @click="triggerFileInput" :disabled="uploadForm.processing" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50">
+                <Icon v-if="uploadForm.processing" icon="mdi:loading" class="animate-spin" />
+                <Icon v-else icon="mdi:upload" />
+                {{ uploadForm.processing ? 'Mengupload...' : 'Upload Bukti Pembayaran' }}
+              </button>
             </div>
           </div>
           <div v-if="order.status === 'menunggu_pembayaran'">
@@ -129,17 +146,37 @@
         </div>
       </div>
     </Transition>
+    <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/jpeg,image/png,image/webp" class="hidden">
   </UserLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ order: Object });
 const showQrisModal = ref(false);
+
+const fileInput = ref(null);
+const uploadForm = useForm({
+  proof_image: null,
+});
+
+function triggerFileInput() {
+  fileInput.value.click();
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  uploadForm.proof_image = file;
+  uploadForm.post(`/pesanan/${props.order.id}/bayar`, {
+    forceFormData: true,
+  });
+}
 
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function statusClass(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }

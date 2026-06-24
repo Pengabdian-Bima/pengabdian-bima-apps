@@ -10,18 +10,27 @@ class UserAddressController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
-            'label' => 'required|string|max:100',
-            'recipient_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'province' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'district' => 'nullable|string|max:255',
-            'village' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:10',
-            'is_default' => 'boolean',
-        ]);
+        \Illuminate\Support\Facades\Log::info('UserAddressController@store request data: ', $request->all());
+
+        try {
+            $request->validate([
+                'label' => 'required|string|max:100',
+                'recipient_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string',
+                'province' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:255',
+                'city_id' => 'nullable',
+                'district' => 'nullable|string|max:255',
+                'village' => 'nullable|string|max:255',
+                'postal_code' => 'nullable|string|max:10',
+                'is_default' => 'boolean',
+            ]);
+            \Illuminate\Support\Facades\Log::info('UserAddressController@store validation passed');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('UserAddressController@store validation failed: ', $e->errors());
+            throw $e;
+        }
 
         $userId = auth()->id();
         $isFirst = UserAddress::where('user_id', $userId)->count() === 0;
@@ -32,7 +41,7 @@ class UserAddressController extends Controller
                 UserAddress::where('user_id', $userId)->update(['is_default' => false]);
             }
 
-            UserAddress::create([
+            $created = UserAddress::create([
                 'user_id' => $userId,
                 'label' => $request->label,
                 'recipient_name' => $request->recipient_name,
@@ -40,11 +49,13 @@ class UserAddressController extends Controller
                 'address' => $request->address,
                 'province' => $request->province,
                 'city' => $request->city,
+                'city_id' => $request->city_id,
                 'district' => $request->district,
                 'village' => $request->village,
                 'postal_code' => $request->postal_code,
                 'is_default' => $isDefault,
             ]);
+            \Illuminate\Support\Facades\Log::info('UserAddressController@store address created ID: ' . $created->id);
         });
 
         return back()->with('success', 'Alamat berhasil ditambahkan.');
@@ -52,22 +63,35 @@ class UserAddressController extends Controller
 
     public function update(Request $request, UserAddress $address)
     {
+        \Illuminate\Support\Facades\Log::info('UserAddressController@update request data: ', $request->all());
+
         if ($address->user_id !== auth()->id()) {
+            \Illuminate\Support\Facades\Log::warning('UserAddressController@update unauthorized access', [
+                'address_user_id' => $address->user_id,
+                'auth_id' => auth()->id()
+            ]);
             abort(403);
         }
 
-        $request->validate([
-            'label' => 'required|string|max:100',
-            'recipient_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'province' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'district' => 'nullable|string|max:255',
-            'village' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:10',
-            'is_default' => 'boolean',
-        ]);
+        try {
+            $request->validate([
+                'label' => 'required|string|max:100',
+                'recipient_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string',
+                'province' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:255',
+                'city_id' => 'nullable',
+                'district' => 'nullable|string|max:255',
+                'village' => 'nullable|string|max:255',
+                'postal_code' => 'nullable|string|max:10',
+                'is_default' => 'boolean',
+            ]);
+            \Illuminate\Support\Facades\Log::info('UserAddressController@update validation passed');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('UserAddressController@update validation failed: ', $e->errors());
+            throw $e;
+        }
 
         $isDefault = $request->boolean('is_default');
 
@@ -85,11 +109,13 @@ class UserAddressController extends Controller
                 'address' => $request->address,
                 'province' => $request->province,
                 'city' => $request->city,
+                'city_id' => $request->city_id,
                 'district' => $request->district,
                 'village' => $request->village,
                 'postal_code' => $request->postal_code,
                 'is_default' => $isDefault,
             ]);
+            \Illuminate\Support\Facades\Log::info('UserAddressController@update address updated ID: ' . $address->id);
         });
 
         return back()->with('success', 'Alamat berhasil diperbarui.');
