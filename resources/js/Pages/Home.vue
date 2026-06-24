@@ -15,7 +15,7 @@
             </div>
             <h1 class="text-4xl lg:text-6xl font-extrabold text-text dark:text-white leading-tight">
               Biskuit Ikan
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">Hulu'u</span>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">Hulu'u</span>
               <br>Danau Limboto
             </h1>
             <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 leading-relaxed max-w-lg">
