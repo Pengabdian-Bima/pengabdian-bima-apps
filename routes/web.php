@@ -8,6 +8,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -50,6 +51,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profil', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    Route::post('/alamat', [UserAddressController::class, 'store'])->name('addresses.store');
+    Route::put('/alamat/{address}', [UserAddressController::class, 'update'])->name('addresses.update');
+    Route::delete('/alamat/{address}', [UserAddressController::class, 'destroy'])->name('addresses.destroy');
+    Route::put('/alamat/{address}/default', [UserAddressController::class, 'setDefault'])->name('addresses.default');
 });
 
 // Admin

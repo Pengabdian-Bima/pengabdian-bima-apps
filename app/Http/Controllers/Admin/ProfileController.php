@@ -13,6 +13,7 @@ class ProfileController extends Controller
     {
         return Inertia::render('Admin/Profile/Index', [
             'user' => auth()->user(),
+            'addresses' => auth()->user()->addresses()->latest()->get(),
         ]);
     }
 

@@ -32,18 +32,63 @@
           </div>
         </div>
         <div class="space-y-6">
-          <div class="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 class="font-semibold text-text mb-4">Pembayaran</h2>
-            <div v-if="order.payment" class="text-sm space-y-2">
-              <p>{{ order.payment.sender_name }} - {{ order.payment.sender_bank }}</p>
-              <p>Rp {{ fmt(order.payment.amount) }} | {{ order.payment.transfer_date }}</p>
-              <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl mt-2">
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 class="font-semibold text-text mb-4 flex items-center gap-1.5">
+              <Icon icon="mdi:credit-card-outline" class="text-primary text-xl" /> Pembayaran
+            </h2>
+            
+            <div class="mb-4 pb-4 border-b border-gray-50">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Metode Pembayaran</span>
+              <span class="text-sm font-semibold text-text mt-1 flex items-center gap-1.5">
+                <Icon :icon="order.payment_method === 'qris' ? 'mdi:qrcode-scan' : 'mdi:bank'" class="text-primary text-lg" />
+                {{ order.payment_method === 'qris' ? 'QRIS (E-Wallet)' : 'Transfer Bank Manual' }}
+              </span>
             </div>
-            <div v-else-if="order.status === 'menunggu_pembayaran'">
-              <p class="text-sm text-gray-500 mb-3">Transfer ke:</p>
-              <div class="text-sm space-y-1"><p class="p-2 bg-gray-50 rounded-lg"><strong>BRI:</strong> 0123-4567-8901</p><p class="p-2 bg-gray-50 rounded-lg"><strong>BNI:</strong> 9876-5432-1098</p></div>
+
+            <div v-if="order.payment" class="text-sm space-y-2 bg-gray-50 p-4 rounded-xl">
+              <div class="flex justify-between"><span class="text-gray-500">Pengirim:</span><span class="font-medium text-text">{{ order.payment.sender_name }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Bank/E-Wallet:</span><span class="font-medium text-text">{{ order.payment.sender_bank }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Jumlah:</span><span class="font-bold text-primary">Rp {{ fmt(order.payment.amount) }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Tanggal:</span><span class="text-gray-500 text-xs">{{ order.payment.transfer_date }}</span></div>
+              <div class="pt-2">
+                <span class="text-xs font-medium text-gray-400 block mb-1">Bukti Transfer:</span>
+                <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border border-gray-100 hover:scale-105 transition duration-300">
+              </div>
+            </div>
+            
+            <div v-else-if="order.status === 'menunggu_pembayaran'" class="space-y-4">
+              <!-- QRIS Display -->
+              <div v-if="order.payment_method === 'qris'" class="text-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p class="text-xs font-semibold text-text mb-2">SCAN BARCODE QRIS BERIKUT</p>
+                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2">
+                  <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto" />
+                </div>
+                <p class="text-[10px] text-gray-400">Scan QRIS menggunakan GoPay, OVO, Dana, LinkAja, ShopeePay atau Mobile Banking</p>
+              </div>
+
+              <!-- Bank Transfer Display -->
+              <div v-else class="space-y-2">
+                <p class="text-xs text-gray-500">Silakan transfer manual ke rekening berikut:</p>
+                <div class="text-xs space-y-2">
+                  <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
+                    <div>
+                      <span class="font-bold text-text">Bank BRI</span>
+                      <p class="font-mono text-gray-500 mt-0.5 select-all">0123-4567-8901</p>
+                    </div>
+                    <span class="text-[10px] text-gray-400">A.N UDF Flamboyan</span>
+                  </div>
+                  <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
+                    <div>
+                      <span class="font-bold text-text">Bank BNI</span>
+                      <p class="font-mono text-gray-500 mt-0.5 select-all">9876-5432-1098</p>
+                    </div>
+                    <span class="text-[10px] text-gray-400">A.N UDF Flamboyan</span>
+                  </div>
+                </div>
+              </div>
+
               <Link :href="`/pesanan/${order.id}/bayar`" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all">
-                <Icon icon="mdi:upload" /> Upload Bukti
+                <Icon icon="mdi:upload" /> Upload Bukti Pembayaran
               </Link>
             </div>
           </div>

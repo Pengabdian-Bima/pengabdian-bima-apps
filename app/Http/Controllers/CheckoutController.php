@@ -36,15 +36,18 @@ class CheckoutController extends Controller
             'items' => $items,
             'total' => $total,
             'user' => auth()->user(),
+            'addresses' => auth()->user()->addresses()->latest()->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'shipping_name' => 'required|string|max:255',
-            'shipping_phone' => 'required|string|max:20',
-            'shipping_address' => 'required|string',
+            'address_id' => 'nullable|exists:user_addresses,id',
+            'payment_method' => 'required|in:transfer,qris',
+            'shipping_name' => 'required_without:address_id|nullable|string|max:255',
+            'shipping_phone' => 'required_without:address_id|nullable|string|max:20',
+            'shipping_address' => 'required_without:address_id|nullable|string',
             'shipping_province' => 'nullable|string',
             'shipping_city' => 'nullable|string',
             'shipping_district' => 'nullable|string',
@@ -68,14 +71,22 @@ class CheckoutController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request, $cart) {
-            $total = $cart->items->sum(fn ($item) => $item->qty * $item->price);
-
-            $order = Order::create([
-                'user_id' => auth()->id(),
-                'order_code' => Order::generateOrderCode(),
-                'total_amount' => $total,
-                'status' => 'menunggu_pembayaran',
+        $shippingData = [];
+        if ($request->address_id) {
+            $address = \App\Models\UserAddress::where('user_id', auth()->id())
+                ->findOrFail($request->address_id);
+            $shippingData = [
+                'shipping_name' => $address->recipient_name,
+                'shipping_phone' => $address->phone,
+                'shipping_address' => $address->address,
+                'shipping_province' => $address->province,
+                'shipping_city' => $address->city,
+                'shipping_district' => $address->district,
+                'shipping_village' => $address->village,
+                'shipping_postal_code' => $address->postal_code,
+            ];
+        } else {
+            $shippingData = [
                 'shipping_name' => $request->shipping_name,
                 'shipping_phone' => $request->shipping_phone,
                 'shipping_address' => $request->shipping_address,
@@ -84,8 +95,20 @@ class CheckoutController extends Controller
                 'shipping_district' => $request->shipping_district,
                 'shipping_village' => $request->shipping_village,
                 'shipping_postal_code' => $request->shipping_postal_code,
+            ];
+        }
+
+        DB::transaction(function () use ($request, $cart, $shippingData) {
+            $total = $cart->items->sum(fn ($item) => $item->qty * $item->price);
+
+            $order = Order::create(array_merge([
+                'user_id' => auth()->id(),
+                'order_code' => Order::generateOrderCode(),
+                'total_amount' => $total,
+                'payment_method' => $request->payment_method,
+                'status' => 'menunggu_pembayaran',
                 'notes' => $request->notes,
-            ]);
+            ], $shippingData));
 
             foreach ($cart->items as $item) {
                 OrderItem::create([

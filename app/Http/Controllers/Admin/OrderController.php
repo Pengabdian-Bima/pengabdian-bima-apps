@@ -43,6 +43,7 @@ class OrderController extends Controller
                 'id' => $order->id,
                 'order_code' => $order->order_code,
                 'total_amount' => $order->total_amount,
+                'payment_method' => $order->payment_method,
                 'status' => $order->status,
                 'status_label' => $order->status_label,
                 'status_color' => $order->status_color,

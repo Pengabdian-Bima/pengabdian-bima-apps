@@ -35,14 +35,30 @@
 
       <div class="space-y-6">
         <!-- Payment -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 class="font-semibold text-text mb-4">Pembayaran</h2>
-          <div v-if="order.payment" class="space-y-2 text-sm">
-            <p>{{ order.payment.sender_name }} — {{ order.payment.sender_bank }}</p>
-            <p>Rp {{ fmt(order.payment.amount) }} | {{ order.payment.transfer_date }}</p>
-            <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border mt-2" alt="Bukti">
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <h2 class="font-semibold text-text mb-4 flex items-center gap-1.5">
+            <Icon icon="mdi:credit-card-outline" class="text-primary text-xl" /> Info Pembayaran
+          </h2>
+          
+          <div class="mb-4 pb-4 border-b border-gray-50 text-sm">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Metode Pilihan</span>
+            <span class="font-semibold text-text mt-1 flex items-center gap-1.5">
+              <Icon :icon="order.payment_method === 'qris' ? 'mdi:qrcode-scan' : 'mdi:bank'" class="text-primary text-lg" />
+              {{ order.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank Manual' }}
+            </span>
           </div>
-          <p v-else class="text-sm text-gray-500">Belum ada bukti pembayaran</p>
+
+          <div v-if="order.payment" class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-gray-500">Pengirim:</span><span class="font-medium text-text">{{ order.payment.sender_name }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Bank/Platform:</span><span class="font-medium text-text">{{ order.payment.sender_bank }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Jumlah:</span><span class="font-bold text-primary">Rp {{ fmt(order.payment.amount) }}</span></div>
+            <p class="text-xs text-gray-400 mt-2">Tanggal Transfer: {{ order.payment.transfer_date }}</p>
+            <div class="pt-2">
+              <span class="text-xs font-semibold text-gray-400 block mb-1">Bukti Transfer:</span>
+              <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border border-gray-100" alt="Bukti">
+            </div>
+          </div>
+          <p v-else class="text-sm text-gray-500">Belum ada unggahan bukti pembayaran</p>
         </div>
 
         <!-- Update Status -->
