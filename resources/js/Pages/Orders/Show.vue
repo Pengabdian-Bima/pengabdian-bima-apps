@@ -60,8 +60,15 @@
               <!-- QRIS Display -->
               <div v-if="order.payment_method === 'qris'" class="text-center bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p class="text-xs font-semibold text-text mb-2">SCAN BARCODE QRIS BERIKUT</p>
-                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2">
-                  <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto" />
+                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2 cursor-pointer hover:shadow-md transition-all duration-300 group" @click="showQrisModal = true">
+                  <div class="relative overflow-hidden rounded-lg">
+                    <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto group-hover:scale-105 transition-transform duration-500" />
+                    <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div class="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm">
+                        <Icon icon="mdi:magnify-plus-outline" class="text-primary text-xl" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <p class="text-[10px] text-gray-400">Scan QRIS menggunakan GoPay, OVO, Dana, LinkAja, ShopeePay atau Mobile Banking</p>
               </div>
@@ -101,14 +108,39 @@
         </div>
       </div>
     </div>
+
+    <!-- QRIS Modal -->
+    <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showQrisModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" @click="showQrisModal = false">
+        <div class="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl transform transition-all" @click.stop>
+          <button @click="showQrisModal = false" class="absolute top-4 right-4 w-8 h-8 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center text-gray-700 hover:text-black transition-colors z-10">
+            <Icon icon="mdi:close" class="text-xl" />
+          </button>
+          <div class="p-6 pt-8 text-center">
+            <h3 class="font-bold text-lg text-text mb-1">QRIS Pembayaran</h3>
+            <p class="text-xs text-gray-500 mb-6">Scan barcode ini untuk menyelesaikan pembayaran pesanan Anda.</p>
+            <div class="bg-white p-2 border border-gray-100 rounded-2xl shadow-inner inline-block">
+              <img src="/img/qris-barcode.png" alt="QRIS Full" class="w-full max-w-[280px] h-auto object-contain mx-auto" />
+            </div>
+          </div>
+          <div class="px-6 pb-6 pt-2">
+            <button @click="showQrisModal = false" class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </UserLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
-defineProps({ order: Object });
+
+const props = defineProps({ order: Object });
+const showQrisModal = ref(false);
+
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function statusClass(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }
 </script>
