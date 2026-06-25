@@ -49,7 +49,8 @@
               <Icon icon="mdi:alert-circle-outline" class="text-lg shrink-0 mt-0.5" />
               <div>
                 <p class="font-semibold">Bukti Pembayaran Ditolak</p>
-                <p class="mt-0.5 text-gray-600">Admin menolak bukti transfer Anda. Silakan periksa kembali detail pembayaran dan upload ulang bukti transfer yang valid.</p>
+                <p v-if="order.rejection_reason" class="mt-1 p-2 bg-red-100/50 rounded-lg text-red-800 font-medium">Alasan: "{{ order.rejection_reason }}"</p>
+                <p class="mt-1 text-gray-600">Admin menolak bukti transfer Anda. Silakan periksa kembali detail pembayaran dan upload ulang bukti transfer yang valid.</p>
               </div>
             </div>
 

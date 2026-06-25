@@ -7,6 +7,15 @@
       <span :class="['px-4 py-1.5 rounded-full text-sm font-medium', sc(order.status_color)]">{{ order.status_label }}</span>
     </div>
 
+    <!-- Alert Rejection Reason -->
+    <div v-if="order.status === 'ditolak'" class="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 shadow-sm">
+      <Icon icon="mdi:alert-circle" class="text-danger text-2xl shrink-0" />
+      <div>
+        <h3 class="font-bold text-red-800 text-sm">Pembayaran Ditolak</h3>
+        <p class="text-xs text-red-600 mt-1">Alasan Penolakan: <span class="font-semibold">{{ order.rejection_reason || 'Tidak ada alasan penolakan yang ditulis.' }}</span></p>
+      </div>
+    </div>
+
     <div class="grid lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 space-y-6">
         <!-- Items -->
@@ -66,7 +75,7 @@
           <h2 class="font-semibold text-text mb-4">Ubah Status</h2>
           <div class="space-y-2">
             <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('diproses')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Verifikasi & Proses</button>
-            <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('ditolak')" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition">✗ Tolak Pembayaran</button>
+            <button v-if="order.status === 'menunggu_verifikasi'" @click="openRejectionModal" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition">✗ Tolak Pembayaran</button>
             <button v-if="order.status === 'diproses'" @click="updateStatus('dikirim')" class="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition">📦 Tandai Dikirim</button>
             <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Tandai Selesai</button>
             <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition">Batalkan</button>
@@ -74,15 +83,76 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Alasan Penolakan -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showRejectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showRejectionModal = false">
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Alasan Penolakan Pembayaran</h3>
+            <p class="text-xs text-gray-500 mb-4">Silakan berikan alasan mengapa bukti pembayaran ini ditolak agar pembeli dapat mengetahuinya.</p>
+            
+            <textarea 
+              v-model="rejectionReason" 
+              rows="4" 
+              placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai / nama pengirim berbeda"
+              class="w-full p-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none mb-4"
+              required
+            ></textarea>
+            
+            <div class="flex gap-3">
+              <button 
+                @click="showRejectionModal = false" 
+                class="flex-1 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+              >
+                Batal
+              </button>
+              <button 
+                @click="submitRejection" 
+                :disabled="!rejectionReason.trim()" 
+                class="flex-1 py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition disabled:opacity-50"
+              >
+                Tolak Pembayaran
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
   </AdminLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
 const props = defineProps({ order: Object });
+const showRejectionModal = ref(false);
+const rejectionReason = ref('');
+
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function sc(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }
-function updateStatus(status) { router.put(`/admin/orders/${props.order.id}/status`, { status }); }
+
+function updateStatus(status) { 
+  router.put(`/admin/orders/${props.order.id}/status`, { status }); 
+}
+
+function openRejectionModal() {
+  rejectionReason.value = '';
+  showRejectionModal.value = true;
+}
+
+function submitRejection() {
+  if (!rejectionReason.value.trim()) return;
+  router.put(`/admin/orders/${props.order.id}/status`, { 
+    status: 'ditolak', 
+    rejection_reason: rejectionReason.value 
+  }, {
+    onSuccess: () => {
+      showRejectionModal.value = false;
+    }
+  });
+}
 </script>

@@ -217,10 +217,41 @@ class RajaOngkirService
                 ['service' => 'Pos Reguler', 'description' => 'Pos Reguler', 'cost' => [['value' => $baseCost - 1000, 'etd' => '3-4', 'note' => '']]],
                 ['service' => 'Pos Kilat Khusus', 'description' => 'Pos Kilat Khusus', 'cost' => [['value' => $baseCost + 2000, 'etd' => '2-3', 'note' => '']]]
             ];
-        } else { // tiki
+        } elseif ($courier === 'tiki') {
             $services = [
                 ['service' => 'REG', 'description' => 'Regular Service', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]],
                 ['service' => 'ECO', 'description' => 'Economy Service', 'cost' => [['value' => $baseCost - 4000, 'etd' => '5-6', 'note' => '']]]
+            ];
+        } elseif ($courier === 'jnt') {
+            $services = [
+                ['service' => 'EZ', 'description' => 'Layanan Reguler EZ', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]],
+                ['service' => 'J&T ECO', 'description' => 'Layanan Ekonomis', 'cost' => [['value' => $baseCost - 3000, 'etd' => '4-5', 'note' => '']]]
+            ];
+        } elseif ($courier === 'sicepat') {
+            $services = [
+                ['service' => 'SIUNTUNG', 'description' => 'Layanan Reguler SiUntung', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]],
+                ['service' => 'BEST', 'description' => 'Besok Sampai Tujuan', 'cost' => [['value' => $baseCost + 8000, 'etd' => '1-1', 'note' => '']]]
+            ];
+        } elseif ($courier === 'anteraja') {
+            $services = [
+                ['service' => 'REG', 'description' => 'Layanan Reguler', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]],
+                ['service' => 'NEXTDAY', 'description' => 'Layanan Kilat', 'cost' => [['value' => $baseCost + 7000, 'etd' => '1-1', 'note' => '']]]
+            ];
+        } elseif ($courier === 'wahana') {
+            $services = [
+                ['service' => 'Normal', 'description' => 'Layanan Normal', 'cost' => [['value' => $baseCost - 5000, 'etd' => '3-5', 'note' => '']]]
+            ];
+        } elseif ($courier === 'ninja') {
+            $services = [
+                ['service' => 'Standard', 'description' => 'Layanan Standar', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]]
+            ];
+        } elseif ($courier === 'lion') {
+            $services = [
+                ['service' => 'REGPACK', 'description' => 'Regular Package', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]]
+            ];
+        } else {
+            $services = [
+                ['service' => 'REG', 'description' => 'Layanan Reguler', 'cost' => [['value' => $baseCost, 'etd' => '2-3', 'note' => '']]]
             ];
         }
 

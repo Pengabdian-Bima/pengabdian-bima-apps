@@ -57,6 +57,7 @@ class OrderController extends Controller
                 'shipping_village' => $order->shipping_village,
                 'shipping_postal_code' => $order->shipping_postal_code,
                 'notes' => $order->notes,
+                'rejection_reason' => $order->rejection_reason,
                 'created_at' => $order->created_at->format('d M Y H:i'),
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
@@ -170,7 +171,18 @@ class OrderController extends Controller
 
         // Restore stock
         foreach ($order->items as $item) {
-            $item->product->increment('stock', $item->qty);
+            $product = $item->product;
+            $stockBefore = $product->stock;
+            $product->increment('stock', $item->qty);
+
+            \App\Models\StockHistory::create([
+                'product_id' => $product->id,
+                'type' => 'in',
+                'quantity' => $item->qty,
+                'stock_before' => $stockBefore,
+                'stock_after' => $product->stock,
+                'note' => "Pesanan Dibatalkan Pembeli #{$order->order_code}",
+            ]);
         }
 
         return back()->with('success', 'Pesanan berhasil dibatalkan.');

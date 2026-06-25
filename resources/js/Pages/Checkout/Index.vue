@@ -131,18 +131,18 @@
               <Icon icon="mdi:truck-delivery-outline" class="text-primary text-2xl" /> Opsi Pengiriman
             </h2>
 
-            <div class="grid grid-cols-3 gap-4">
-              <!-- Courier options JNE, POS, TIKI -->
+            <div class="grid grid-cols-3 gap-3">
+              <!-- Courier options -->
               <label 
-                v-for="c in ['jne', 'pos', 'tiki']" 
+                v-for="c in ['jne', 'pos', 'tiki', 'jnt', 'sicepat', 'anteraja', 'wahana', 'ninja', 'lion']" 
                 :key="c" 
-                :class="['flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all justify-center', form.courier === c ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']"
+                :class="['flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all justify-center', form.courier === c ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']"
               >
                 <input type="radio" :value="c" v-model="form.courier" @change="calculateShippingCost" class="sr-only">
-                <div :class="['w-5 h-5 rounded-full border flex items-center justify-center shrink-0', form.courier === c ? 'border-primary' : 'border-gray-300']">
-                  <div v-if="form.courier === c" class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                <div :class="['w-4 h-4 rounded-full border flex items-center justify-center shrink-0', form.courier === c ? 'border-primary' : 'border-gray-300']">
+                  <div v-if="form.courier === c" class="w-2 h-2 rounded-full bg-primary"></div>
                 </div>
-                <span class="font-bold text-text uppercase">{{ c }}</span>
+                <span class="font-bold text-text uppercase text-xs">{{ c }}</span>
               </label>
             </div>
 

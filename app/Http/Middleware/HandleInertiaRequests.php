@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'info' => fn () => $request->session()->get('info'),
+                'receipt' => fn () => $request->session()->get('receipt'),
             ],
             'cartCount' => fn () => $request->user()
                 ? \App\Models\CartItem::whereHas('cart', fn ($q) => $q->where('user_id', $request->user()->id))->sum('qty')

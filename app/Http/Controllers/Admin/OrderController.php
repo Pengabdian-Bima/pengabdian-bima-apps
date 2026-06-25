@@ -51,6 +51,7 @@ class OrderController extends Controller
                 'shipping_phone' => $order->shipping_phone,
                 'shipping_address' => $order->shipping_address,
                 'notes' => $order->notes,
+                'rejection_reason' => $order->rejection_reason,
                 'user' => ['name' => $order->user->name, 'email' => $order->user->email, 'phone' => $order->user->phone],
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
@@ -74,21 +75,58 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order)
     {
-        $request->validate(['status' => 'required|in:diproses,dikirim,selesai,ditolak,dibatalkan']);
+        $request->validate([
+            'status' => 'required|in:diproses,dikirim,selesai,ditolak,dibatalkan',
+            'rejection_reason' => 'required_if:status,ditolak|nullable|string|max:1000',
+        ]);
+        
         $newStatus = $request->status;
 
-        if ($newStatus === 'ditolak' && $order->paymentConfirmation) {
-            $order->paymentConfirmation->update(['status' => 'rejected']);
-            foreach ($order->items as $item) { $item->product->increment('stock', $item->qty); }
+        if ($newStatus === 'ditolak') {
+            $order->rejection_reason = $request->rejection_reason;
+            if ($order->paymentConfirmation) {
+                $order->paymentConfirmation->update(['status' => 'rejected']);
+            }
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                $stockBefore = $product->stock;
+                $product->increment('stock', $item->qty);
+                
+                \App\Models\StockHistory::create([
+                    'product_id' => $product->id,
+                    'type' => 'in',
+                    'quantity' => $item->qty,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $product->stock,
+                    'note' => "Pembayaran Ditolak #{$order->order_code}",
+                ]);
+            }
         }
+        
         if ($newStatus === 'diproses' && $order->paymentConfirmation) {
             $order->paymentConfirmation->update(['status' => 'verified']);
         }
+        
         if ($newStatus === 'dibatalkan') {
-            foreach ($order->items as $item) { $item->product->increment('stock', $item->qty); }
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                $stockBefore = $product->stock;
+                $product->increment('stock', $item->qty);
+
+                \App\Models\StockHistory::create([
+                    'product_id' => $product->id,
+                    'type' => 'in',
+                    'quantity' => $item->qty,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $product->stock,
+                    'note' => "Pesanan Dibatalkan #{$order->order_code}",
+                ]);
+            }
         }
 
-        $order->update(['status' => $newStatus]);
+        $order->status = $newStatus;
+        $order->save();
+        
         return back()->with('success', 'Status pesanan berhasil diperbarui!');
     }
 }

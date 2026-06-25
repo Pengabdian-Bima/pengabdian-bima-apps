@@ -118,6 +118,7 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
 
 const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: 'mdi:view-dashboard' },
+  { href: '/admin/cashier', label: 'Kasir', icon: 'mdi:cash-register' },
   { href: '/admin/products', label: 'Produk', icon: 'mdi:package-variant-closed' },
   { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
   { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },

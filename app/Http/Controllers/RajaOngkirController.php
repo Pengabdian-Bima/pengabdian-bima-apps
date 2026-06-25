@@ -26,7 +26,7 @@ class RajaOngkirController extends Controller
         $request->validate([
             'destination_city_id' => 'required',
             'weight' => 'required|integer|min:1',
-            'courier' => 'required|string|in:jne,pos,tiki',
+            'courier' => 'required|string|in:jne,pos,tiki,jnt,sicepat,anteraja,wahana,ninja,lion',
         ]);
 
         $costs = $this->rajaOngkirService->calculateCost(

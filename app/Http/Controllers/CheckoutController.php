@@ -56,7 +56,7 @@ class CheckoutController extends Controller
             'shipping_village' => 'nullable|string',
             'shipping_postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string',
-            'courier' => 'required|string|in:jne,pos,tiki',
+            'courier' => 'required|string|in:jne,pos,tiki,jnt,sicepat,anteraja,wahana,ninja,lion',
             'courier_service' => 'required|string',
         ]);
 

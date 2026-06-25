@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Admin\CashierController;
 
 // Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -68,6 +69,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 
     Route::resource('products', AdminProductController::class)->except('show');
     Route::delete('product-images/{productImage}', [AdminProductController::class, 'deleteImage'])->name('product-images.destroy');
+
+    Route::get('cashier', [CashierController::class, 'index'])->name('cashier.index');
+    Route::post('cashier', [CashierController::class, 'store'])->name('cashier.store');
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
