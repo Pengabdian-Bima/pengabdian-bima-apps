@@ -11,18 +11,96 @@
       </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Left 2 Columns -->
         <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white rounded-2xl border border-gray-100 p-6">
+          
+          <!-- Items List with reviews conditional -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 class="font-semibold text-text mb-4">Item Pesanan</h2>
-            <div class="space-y-3">
-              <div v-for="item in order.items" :key="item.id" class="flex justify-between py-2 border-b border-gray-50 last:border-0">
-                <div><p class="font-medium text-text">{{ item.product_name }}</p><p class="text-sm text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</p></div>
-                <p class="font-semibold">Rp {{ fmt(item.subtotal) }}</p>
+            <div class="space-y-6">
+              <div v-for="item in order.items" :key="item.id" class="border-b border-gray-100 pb-5 last:border-0 last:pb-0">
+                <div class="flex justify-between items-start py-2">
+                  <div>
+                    <p class="font-semibold text-text text-base">{{ item.product_name }}</p>
+                    <p class="text-sm text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</p>
+                  </div>
+                  <p class="font-bold text-text">Rp {{ fmt(item.subtotal) }}</p>
+                </div>
+
+                <!-- Review Section for Completed Orders -->
+                <div v-if="order.status === 'selesai'" class="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <!-- Case A: Review exists -->
+                  <div v-if="item.review" class="space-y-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ulasan Anda:</span>
+                      <div class="flex items-center gap-0.5">
+                        <Icon v-for="s in 5" :key="s" icon="mdi:star" :class="s <= item.review.rating ? 'text-amber-400' : 'text-gray-300'" class="text-lg" />
+                      </div>
+                    </div>
+                    <p class="text-sm text-gray-700 italic">"{{ item.review.comment || 'Tidak ada komentar ulasan.' }}"</p>
+                  </div>
+
+                  <!-- Case B: Form to create review -->
+                  <div v-else-if="reviewForms[item.product_id]" class="space-y-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Berikan Ulasan Produk</p>
+                    
+                    <!-- Star Rating Interactive Selector -->
+                    <div class="flex items-center gap-1.5">
+                      <button 
+                        type="button" 
+                        v-for="star in 5" 
+                        :key="star" 
+                        @click="reviewForms[item.product_id].rating = star"
+                        @mouseover="reviewForms[item.product_id].hoverRating = star"
+                        @mouseleave="reviewForms[item.product_id].hoverRating = 0"
+                        class="focus:outline-none transition-all duration-150 transform hover:scale-125"
+                      >
+                        <Icon 
+                          icon="mdi:star" 
+                          :class="[
+                            'text-2xl', 
+                            (reviewForms[item.product_id].hoverRating || reviewForms[item.product_id].rating) >= star 
+                              ? 'text-amber-400 drop-shadow-sm' 
+                              : 'text-gray-300'
+                          ]" 
+                        />
+                      </button>
+                      <span class="text-xs font-semibold text-amber-500 ml-2">
+                        {{ ['Sangat Buruk', 'Buruk', 'Cukup', 'Baik', 'Sangat Baik'][reviewForms[item.product_id].rating - 1] }}
+                      </span>
+                    </div>
+
+                    <!-- Comment input -->
+                    <div>
+                      <textarea 
+                        v-model="reviewForms[item.product_id].comment" 
+                        rows="2" 
+                        placeholder="Tulis pendapat Anda tentang produk ini..."
+                        class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm transition resize-none"
+                      ></textarea>
+                    </div>
+
+                    <!-- Submit Review Button -->
+                    <button 
+                      type="button" 
+                      @click="submitReview(item.product_id)"
+                      class="px-4 py-2 bg-primary text-white font-semibold rounded-xl text-xs hover:shadow-lg transition-all flex items-center gap-1 w-fit"
+                    >
+                      <Icon icon="mdi:send-outline" /> Kirim Ulasan
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="flex justify-between mt-4 pt-4 border-t border-gray-100 text-lg font-bold"><span>Total</span><span class="text-primary">Rp {{ fmt(order.total_amount) }}</span></div>
+            
+            <div class="flex justify-between mt-6 pt-6 border-t border-gray-150 text-lg font-bold">
+              <span>Total</span>
+              <span class="text-primary">Rp {{ fmt(order.total_amount) }}</span>
+            </div>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 p-6">
+
+          <!-- Shipping Address -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 class="font-semibold text-text mb-4">Pengiriman</h2>
             <div class="text-sm space-y-1 text-gray-600">
               <p><strong>{{ order.shipping_name }}</strong> ({{ order.shipping_phone }})</p>
@@ -31,6 +109,8 @@
             </div>
           </div>
         </div>
+
+        <!-- Right Side Panel -->
         <div class="space-y-6">
           <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 class="font-semibold text-text mb-4 flex items-center gap-1.5">
@@ -45,15 +125,6 @@
               </span>
             </div>
 
-            <div v-if="order.status === 'ditolak'" class="mb-4 p-3 bg-red-50 border border-red-100 text-danger text-xs rounded-xl flex items-start gap-2">
-              <Icon icon="mdi:alert-circle-outline" class="text-lg shrink-0 mt-0.5" />
-              <div>
-                <p class="font-semibold">Bukti Pembayaran Ditolak</p>
-                <p v-if="order.rejection_reason" class="mt-1 p-2 bg-red-100/50 rounded-lg text-red-800 font-medium">Alasan: "{{ order.rejection_reason }}"</p>
-                <p class="mt-1 text-gray-600">Admin menolak bukti transfer Anda. Silakan periksa kembali detail pembayaran dan upload ulang bukti transfer yang valid.</p>
-              </div>
-            </div>
-
             <div v-if="order.payment" class="text-sm space-y-2 bg-gray-50 p-4 rounded-xl">
               <div class="flex justify-between"><span class="text-gray-500">Pengirim:</span><span class="font-medium text-text">{{ order.payment.sender_name }}</span></div>
               <div class="flex justify-between"><span class="text-gray-500">Bank/E-Wallet:</span><span class="font-medium text-text">{{ order.payment.sender_bank }}</span></div>
@@ -63,28 +134,14 @@
                 <span class="text-xs font-medium text-gray-400 block mb-1">Bukti Transfer:</span>
                 <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border border-gray-100 hover:scale-105 transition duration-300">
               </div>
-              <div v-if="['menunggu_verifikasi', 'ditolak'].includes(order.status)" class="pt-3 border-t border-gray-200/50 mt-3">
-                <button @click="triggerFileInput" :disabled="uploadForm.processing" class="w-full py-2 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-50">
-                  <Icon v-if="uploadForm.processing" icon="mdi:loading" class="animate-spin" />
-                  <Icon v-else :icon="order.status === 'ditolak' ? 'mdi:upload' : 'mdi:swap-horizontal'" />
-                  {{ uploadForm.processing ? 'Mengupload...' : (order.status === 'ditolak' ? 'Upload Ulang Bukti Pembayaran' : 'Ganti Bukti Pembayaran') }}
-                </button>
-              </div>
             </div>
             
             <div v-else-if="order.status === 'menunggu_pembayaran'" class="space-y-4">
               <!-- QRIS Display -->
               <div v-if="order.payment_method === 'qris'" class="text-center bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p class="text-xs font-semibold text-text mb-2">SCAN BARCODE QRIS BERIKUT</p>
-                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2 cursor-pointer hover:shadow-md transition-all duration-300 group" @click="showQrisModal = true">
-                  <div class="relative overflow-hidden rounded-lg">
-                    <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto group-hover:scale-105 transition-transform duration-500" />
-                    <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div class="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm">
-                        <Icon icon="mdi:magnify-plus-outline" class="text-primary text-xl" />
-                      </div>
-                    </div>
-                  </div>
+                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2">
+                  <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto" />
                 </div>
                 <p class="text-[10px] text-gray-400">Scan QRIS menggunakan GoPay, OVO, Dana, LinkAja, ShopeePay atau Mobile Banking</p>
               </div>
@@ -110,13 +167,12 @@
                 </div>
               </div>
 
-              <button @click="triggerFileInput" :disabled="uploadForm.processing" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50">
-                <Icon v-if="uploadForm.processing" icon="mdi:loading" class="animate-spin" />
-                <Icon v-else icon="mdi:upload" />
-                {{ uploadForm.processing ? 'Mengupload...' : 'Upload Bukti Pembayaran' }}
-              </button>
+              <Link :href="`/pesanan/${order.id}/bayar`" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all">
+                <Icon icon="mdi:upload" /> Upload Bukti Pembayaran
+              </Link>
             </div>
           </div>
+          
           <div v-if="order.status === 'menunggu_pembayaran'">
             <button @click="router.post(`/pesanan/${order.id}/batal`)" class="w-full py-2.5 bg-red-50 text-danger text-sm font-semibold rounded-xl hover:bg-red-100 transition">Batalkan Pesanan</button>
           </div>
@@ -126,59 +182,47 @@
         </div>
       </div>
     </div>
-
-    <!-- QRIS Modal -->
-    <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="showQrisModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" @click="showQrisModal = false">
-        <div class="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl transform transition-all" @click.stop>
-          <button @click="showQrisModal = false" class="absolute top-4 right-4 w-8 h-8 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center text-gray-700 hover:text-black transition-colors z-10">
-            <Icon icon="mdi:close" class="text-xl" />
-          </button>
-          <div class="p-6 pt-8 text-center">
-            <h3 class="font-bold text-lg text-text mb-1">QRIS Pembayaran</h3>
-            <p class="text-xs text-gray-500 mb-6">Scan barcode ini untuk menyelesaikan pembayaran pesanan Anda.</p>
-            <div class="bg-white p-2 border border-gray-100 rounded-2xl shadow-inner inline-block">
-              <img src="/img/qris-barcode.png" alt="QRIS Full" class="w-full max-w-[280px] h-auto object-contain mx-auto" />
-            </div>
-          </div>
-          <div class="px-6 pb-6 pt-2">
-            <button @click="showQrisModal = false" class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors">Tutup</button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-    <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/jpeg,image/png,image/webp" class="hidden">
   </UserLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ order: Object });
-const showQrisModal = ref(false);
 
-const fileInput = ref(null);
-const uploadForm = useForm({
-  proof_image: null,
-});
+// Track review forms dynamically per product id
+const reviewForms = ref({});
 
-function triggerFileInput() {
-  fileInput.value.click();
-}
-
-function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  uploadForm.proof_image = file;
-  uploadForm.post(`/pesanan/${props.order.id}/bayar`, {
-    forceFormData: true,
+onMounted(() => {
+  props.order.items.forEach(item => {
+    if (!item.review) {
+      reviewForms.value[item.product_id] = {
+        rating: 5,
+        comment: '',
+        hoverRating: 0,
+      };
+    }
   });
-}
+});
 
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function statusClass(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }
+
+function submitReview(productId) {
+  const formData = reviewForms.value[productId];
+  router.post('/ulasan', {
+    order_id: props.order.id,
+    product_id: productId,
+    rating: formData.rating,
+    comment: formData.comment,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Automatically cleaned up through prop reload
+    }
+  });
+}
 </script>

@@ -57,4 +57,9 @@ class Product extends Model
         }
         return null;
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }

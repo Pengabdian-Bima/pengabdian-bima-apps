@@ -9,6 +9,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAddressController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RajaOngkirController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Admin\CashierController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/produk', [ProductController::class, 'index'])->name('products.index');
 Route::get('/produk/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/api/locations/search', [RajaOngkirController::class, 'search'])->name('rajaongkir.search');
 
 // Auth
 Route::middleware('guest')->group(function () {
@@ -58,8 +60,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/alamat/{address}', [UserAddressController::class, 'destroy'])->name('addresses.destroy');
     Route::put('/alamat/{address}/default', [UserAddressController::class, 'setDefault'])->name('addresses.default');
 
-    Route::get('/api/locations/search', [RajaOngkirController::class, 'search'])->name('rajaongkir.search');
     Route::post('/api/shipping-cost', [RajaOngkirController::class, 'calculateCost'])->name('rajaongkir.cost');
+    Route::post('/ulasan', [ReviewController::class, 'store'])->name('reviews.store');
 });
 
 // Admin

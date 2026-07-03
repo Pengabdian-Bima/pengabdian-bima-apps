@@ -59,13 +59,17 @@ class DashboardController extends Controller
             ]);
 
         // Monthly sales for chart
+        $isSqlite = DB::connection()->getDriverName() === 'sqlite';
+        $monthExpr = $isSqlite ? "CAST(strftime('%m', created_at) AS INTEGER)" : 'MONTH(created_at)';
+
         $monthlySales = Order::where('status', 'selesai')
             ->where('created_at', '>=', now()->startOfYear())
-            ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as total')
+            ->selectRaw($monthExpr . ' as month, SUM(total_amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->get()
             ->pluck('total', 'month')
+            ->mapWithKeys(fn ($total, $month) => [(int)$month => $total])
             ->toArray();
 
         $monthlyData = [];

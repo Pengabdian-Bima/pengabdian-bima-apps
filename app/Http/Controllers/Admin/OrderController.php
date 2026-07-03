@@ -15,22 +15,32 @@ class OrderController extends Controller
         if ($request->status) {
             $query->where('status', $request->status);
         }
+        if ($request->start_date) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
 
-        $orders = $query->latest()->paginate(15)->through(fn ($order) => [
-            'id' => $order->id,
-            'order_code' => $order->order_code,
-            'user_name' => $order->user->name,
-            'total_amount' => $order->total_amount,
-            'status' => $order->status,
-            'status_label' => $order->status_label,
-            'status_color' => $order->status_color,
-            'has_payment' => $order->paymentConfirmation !== null,
-            'created_at' => $order->created_at->format('d M Y H:i'),
-        ]);
+        $orders = $query->latest()
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn ($order) => [
+                'id' => $order->id,
+                'order_code' => $order->order_code,
+                'user_name' => $order->user->name,
+                'total_amount' => $order->total_amount,
+                'status' => $order->status,
+                'status_label' => $order->status_label,
+                'status_color' => $order->status_color,
+                'has_payment' => $order->paymentConfirmation !== null,
+                'created_at' => $order->created_at->format('d M Y H:i'),
+            ]);
 
         return Inertia::render('Admin/Orders/Index', [
             'orders' => $orders,
             'currentStatus' => $request->status,
+            'filters' => $request->only(['start_date', 'end_date', 'status']),
         ]);
     }
 

@@ -112,29 +112,46 @@
       </div>
     </section>
 
-    <!-- Testimoni -->
+    <!-- Ulasan / Testimoni Pelanggan -->
     <section class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
-          <h2 class="text-3xl font-bold text-text dark:text-white">Apa Kata Mereka?</h2>
-          <p class="text-gray-500 dark:text-gray-400 mt-3">Testimoni dari pelanggan setia kami</p>
+          <h2 class="text-3xl font-bold text-text dark:text-white">Ulasan Pembeli</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-3">Pendapat pembeli setia kami tentang Biskuit Ikan Hulu'u</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div v-for="(t, i) in testimonials" :key="i" class="p-6 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center gap-1 mb-3">
-              <Icon v-for="s in 5" :key="s" icon="mdi:star" class="text-primary" />
+
+        <!-- Grid Ulasan Dinamis (Database-driven) -->
+        <div v-if="reviews && reviews.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div v-for="review in reviews" :key="review.id" class="p-6 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-0.5">
+                  <Icon v-for="s in 5" :key="s" icon="mdi:star" :class="s <= review.rating ? 'text-amber-400' : 'text-gray-200'" class="text-lg" />
+                </div>
+                <span class="text-[10px] text-gray-400">{{ review.created_at }}</span>
+              </div>
+              <span class="inline-block text-[10px] font-semibold text-primary bg-primary/5 px-2.5 py-1 rounded-lg mb-3">
+                {{ review.product_name }}
+              </span>
+              <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4 italic">"{{ review.comment || 'Puas dengan produk ini.' }}"</p>
             </div>
-            <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">"{{ t.text }}"</p>
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center">
-                <span class="text-white text-sm font-bold">{{ t.name.charAt(0) }}</span>
+            <div class="flex items-center gap-3 border-t border-gray-50 dark:border-gray-700 pt-4 mt-2">
+              <div class="w-9 h-9 bg-gradient-to-br from-primary/80 to-primary rounded-full flex items-center justify-center">
+                <span class="text-white text-xs font-bold">{{ review.user_name.charAt(0) }}</span>
               </div>
               <div>
-                <p class="text-sm font-semibold text-text dark:text-white">{{ t.name }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.location }}</p>
+                <p class="text-xs font-bold text-text dark:text-white">{{ review.user_name }}</p>
+                <p class="text-[10px] text-gray-400">Pembeli Terverifikasi</p>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Tampilan Kosong jika Belum Ada Ulasan -->
+        <div v-else class="text-center py-16 border border-dashed border-gray-200 dark:border-gray-700 rounded-3xl max-w-md mx-auto">
+          <Icon icon="mdi:star-outline" class="text-gray-300 text-5xl mx-auto mb-3" />
+          <h3 class="text-base font-bold text-text dark:text-white">Belum Ada Ulasan</h3>
+          <p class="text-xs text-gray-400 mt-1 px-4">Jadilah pembeli pertama yang memberikan ulasan setelah menyelesaikan pesanan Anda!</p>
         </div>
       </div>
     </section>
@@ -146,19 +163,13 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
-const props = defineProps({ products: Array, categories: Array });
+const props = defineProps({ products: Array, categories: Array, reviews: Array });
 
 const features = [
   { icon: 'mdi:dumbbell', title: 'Tinggi Protein', desc: 'Kaya akan protein ikan segar dari Danau Limboto untuk nutrisi optimal.', bgClass: 'bg-blue-50', iconClass: 'text-blue-500' },
   { icon: 'mdi:map-marker-radius', title: 'Produk Lokal Gorontalo', desc: 'Mendukung UMKM lokal dengan produk asli Gorontalo berkualitas.', bgClass: 'bg-green-50', iconClass: 'text-green-500' },
   { icon: 'mdi:diamond-stone', title: 'Bahan Berkualitas', desc: 'Menggunakan bahan-bahan pilihan terbaik dan segar setiap hari.', bgClass: 'bg-purple-50', iconClass: 'text-purple-500' },
   { icon: 'mdi:shield-check', title: 'Aman Dikonsumsi', desc: 'Telah tersertifikasi dan aman untuk dikonsumsi segala usia.', bgClass: 'bg-orange-50', iconClass: 'text-orange-500' },
-];
-
-const testimonials = [
-  { name: 'Siti Rahmawati', location: 'Gorontalo', text: 'Biskuitnya enak banget! Renyah dan gurih. Anak-anak saya sangat suka. Pasti repeat order.' },
-  { name: 'Ahmad Fadil', location: 'Jakarta', text: 'Luar biasa, rasa ikannya terasa natural. Cocok untuk oleh-oleh dari Gorontalo. Recommended!' },
-  { name: 'Nur Hasanah', location: 'Makassar', text: 'Pengemasan rapi, rasa istimewa. Senang bisa mendukung produk UMKM lokal Gorontalo.' },
 ];
 
 function formatPrice(price) {

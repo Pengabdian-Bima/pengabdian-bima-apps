@@ -9,12 +9,21 @@ use Inertia\Inertia;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::where('user_id', auth()->id())
-            ->with('paymentConfirmation')
-            ->latest()
+        $query = Order::where('user_id', auth()->id())
+            ->with('paymentConfirmation');
+
+        if ($request->start_date) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $orders = $query->latest()
             ->paginate(10)
+            ->withQueryString()
             ->through(fn ($order) => [
                 'id' => $order->id,
                 'order_code' => $order->order_code,
@@ -28,6 +37,7 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Index', [
             'orders' => $orders,
+            'filters' => $request->only(['start_date', 'end_date']),
         ]);
     }
 
@@ -59,13 +69,23 @@ class OrderController extends Controller
                 'notes' => $order->notes,
                 'rejection_reason' => $order->rejection_reason,
                 'created_at' => $order->created_at->format('d M Y H:i'),
-                'items' => $order->items->map(fn ($item) => [
-                    'id' => $item->id,
-                    'product_name' => $item->product->name,
-                    'qty' => $item->qty,
-                    'price' => $item->price,
-                    'subtotal' => $item->subtotal,
-                ]),
+                'items' => $order->items->map(function ($item) use ($order) {
+                    $review = \App\Models\Review::where('order_id', $order->id)
+                        ->where('product_id', $item->product_id)
+                        ->first();
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product->name,
+                        'qty' => $item->qty,
+                        'price' => $item->price,
+                        'subtotal' => $item->subtotal,
+                        'review' => $review ? [
+                            'rating' => $review->rating,
+                            'comment' => $review->comment,
+                        ] : null,
+                    ];
+                }),
                 'payment' => $order->paymentConfirmation ? [
                     'id' => $order->paymentConfirmation->id,
                     'sender_name' => $order->paymentConfirmation->sender_name,

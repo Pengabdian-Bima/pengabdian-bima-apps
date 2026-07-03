@@ -134,7 +134,7 @@
             <div class="grid grid-cols-3 gap-3">
               <!-- Courier options -->
               <label 
-                v-for="c in ['jne', 'pos', 'tiki', 'jnt', 'sicepat', 'anteraja', 'wahana', 'ninja', 'lion']" 
+                v-for="c in ['jne', 'jnt', 'sicepat', 'ninja', 'pos']" 
                 :key="c" 
                 :class="['flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all justify-center', form.courier === c ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']"
               >
