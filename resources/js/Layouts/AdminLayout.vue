@@ -123,13 +123,11 @@ const menuItems = [
   { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
   { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
   { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
-  { href: '/admin/reports', label: 'Laporan Umum', icon: 'mdi:chart-bar' },
-  { href: '/admin/reports/products', label: 'Laporan Per Produk', icon: 'mdi:chart-box-outline' },
+  { href: '/admin/reports', label: 'Laporan', icon: 'mdi:chart-bar' },
 ];
 
 function isActive(href) {
   if (href === '/admin') return page.url === '/admin';
-  if (href === '/admin/reports') return page.url === '/admin/reports';
   return page.url.startsWith(href);
 }
 </script>
