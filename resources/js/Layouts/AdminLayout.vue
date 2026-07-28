@@ -7,8 +7,8 @@
 
     <!-- Sidebar -->
     <aside :class="['fixed inset-y-0 left-0 z-40 bg-gray-900 text-white transition-all duration-300 flex flex-col', sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20']">
-      <div class="flex items-center gap-3 h-16 px-4 border-b border-gray-800">
-        <div class="lg:w-52 lg:h-10 h-8 w-8 bg-transparent rounded-xl flex items-center justify-center flex-shrink-0">
+      <div class="flex items-center gap-3 h-20 px-4 border-b border-gray-800">
+        <div class="w-full lg:h-12 h-10 bg-transparent rounded-xl flex items-center justify-center flex-shrink-0">
           <img src="/img/logo-putih.png" alt="Logo" class="w-full h-full object-contain" />
         </div>
       </div>
@@ -123,11 +123,13 @@ const menuItems = [
   { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
   { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
   { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
-  { href: '/admin/reports', label: 'Laporan', icon: 'mdi:chart-bar' },
+  { href: '/admin/reports', label: 'Laporan Umum', icon: 'mdi:chart-bar' },
+  { href: '/admin/reports/products', label: 'Laporan Per Produk', icon: 'mdi:chart-box-outline' },
 ];
 
 function isActive(href) {
   if (href === '/admin') return page.url === '/admin';
+  if (href === '/admin/reports') return page.url === '/admin/reports';
   return page.url.startsWith(href);
 }
 </script>

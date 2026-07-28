@@ -89,6 +89,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::put('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/products', [ReportController::class, 'productReport'])->name('reports.products');
+    Route::get('reports/products/export-pdf', [ReportController::class, 'exportProductReportPdf'])->name('reports.products-pdf');
+    Route::get('reports/products/export-excel', [ReportController::class, 'exportProductReportExcel'])->name('reports.products-excel');
     Route::get('reports/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.export-pdf');
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
     Route::get('reports/best-selling-pdf', [ReportController::class, 'exportBestSellingPdf'])->name('reports.best-selling-pdf');
