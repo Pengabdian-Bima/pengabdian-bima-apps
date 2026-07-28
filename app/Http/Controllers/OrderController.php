@@ -47,6 +47,32 @@ class OrderController extends Controller
             abort(403);
         }
 
+        // 24 Hours Payment Deadline Logic
+        $paymentDueAt = $order->created_at->copy()->addHours(24);
+        $isExpired = false;
+
+        if ($order->status === 'menunggu_pembayaran' && now()->greaterThan($paymentDueAt)) {
+            $isExpired = true;
+            $order->update(['status' => 'dibatalkan']);
+            
+            // Restore stock for auto cancelled order
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                $stockBefore = $product->stock;
+                $product->increment('stock', $item->qty);
+
+                \App\Models\StockHistory::create([
+                    'product_id' => $product->id,
+                    'type' => 'in',
+                    'quantity' => $item->qty,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $product->stock,
+                    'note' => "Pesanan Dibatalkan Otomatis (Batas Waktu Pembayaran 24 Jam Habis) #{$order->order_code}",
+                ]);
+            }
+            $order->refresh();
+        }
+
         $order->load(['items.product', 'paymentConfirmation']);
 
         return Inertia::render('Orders/Show', [
@@ -69,6 +95,9 @@ class OrderController extends Controller
                 'notes' => $order->notes,
                 'rejection_reason' => $order->rejection_reason,
                 'created_at' => $order->created_at->format('d M Y H:i'),
+                'payment_due_at' => $paymentDueAt->toIso8601String(),
+                'payment_due_at_formatted' => $paymentDueAt->format('d M Y H:i') . ' WITA',
+                'is_payment_expired' => $isExpired,
                 'items' => $order->items->map(function ($item) use ($order) {
                     $review = \App\Models\Review::where('order_id', $order->id)
                         ->where('product_id', $item->product_id)
@@ -99,12 +128,15 @@ class OrderController extends Controller
         ]);
     }
 
-
-
     public function storePayment(Request $request, Order $order)
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
+        }
+
+        $paymentDueAt = $order->created_at->copy()->addHours(24);
+        if ($order->status === 'menunggu_pembayaran' && now()->greaterThan($paymentDueAt)) {
+            return back()->with('error', 'Batas waktu pembayaran 24 jam untuk pesanan ini telah berakhir. Pesanan dibatalkan.');
         }
 
         if (!in_array($order->status, ['menunggu_pembayaran', 'menunggu_verifikasi', 'ditolak'])) {

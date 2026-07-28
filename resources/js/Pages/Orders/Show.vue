@@ -10,6 +10,27 @@
         <span :class="['px-4 py-1.5 rounded-full text-sm font-medium', statusClass(order.status_color)]">{{ order.status_label }}</span>
       </div>
 
+      <!-- 24 HOURS PAYMENT DEADLINE COUNTDOWN BANNER -->
+      <div v-if="order.status === 'menunggu_pembayaran'" class="mb-6 p-5 bg-primary text-white rounded-2xl shadow-sm relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white shrink-0">
+              <Icon icon="mdi:clock-outline" class="text-2xl animate-pulse" />
+            </div>
+            <div>
+              <h3 class="font-bold text-base">Batas Waktu Pembayaran & Upload (24 Jam)</h3>
+              <p class="text-xs text-white/90 mt-0.5">Selesaikan pembayaran sebelum: <strong>{{ order.payment_due_at_formatted }}</strong></p>
+            </div>
+          </div>
+
+          <!-- Live Countdown Timer -->
+          <div class="bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-center border border-white/20 w-full sm:w-auto">
+            <span class="text-[10px] text-white/80 uppercase tracking-wider block font-semibold">Sisa Waktu Pembayaran:</span>
+            <span class="text-xl font-black text-white font-mono tracking-wider">{{ countdownText }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Left 2 Columns -->
         <div class="lg:col-span-2 space-y-6">
@@ -53,7 +74,7 @@
                         @click="reviewForms[item.product_id].rating = star"
                         @mouseover="reviewForms[item.product_id].hoverRating = star"
                         @mouseleave="reviewForms[item.product_id].hoverRating = 0"
-                        class="focus:outline-none transition-all duration-150 transform hover:scale-125"
+                        class="focus:outline-none transition-all duration-150 transform hover:scale-125 cursor-pointer"
                       >
                         <Icon 
                           icon="mdi:star" 
@@ -84,7 +105,7 @@
                     <button 
                       type="button" 
                       @click="submitReview(item.product_id)"
-                      class="px-4 py-2 bg-primary text-white font-semibold rounded-xl text-xs hover:shadow-lg transition-all flex items-center gap-1 w-fit"
+                      class="px-4 py-2 bg-primary text-white font-semibold rounded-xl text-xs hover:shadow-lg transition-all flex items-center gap-1 w-fit cursor-pointer"
                     >
                       <Icon icon="mdi:send-outline" /> Kirim Ulasan
                     </button>
@@ -137,12 +158,25 @@
             </div>
             
             <div v-else-if="order.status === 'menunggu_pembayaran'" class="space-y-4">
-              <!-- QRIS Display -->
+              
+              <!-- QRIS Display Interactive with Preview & Download -->
               <div v-if="order.payment_method === 'qris'" class="text-center bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p class="text-xs font-semibold text-text mb-2">SCAN BARCODE QRIS BERIKUT</p>
-                <div class="bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-2">
-                  <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto" />
+                
+                <!-- Clickable QRIS Image to Open Preview Modal -->
+                <div @click="showQrisModal = true" class="relative group cursor-pointer bg-white p-2 rounded-xl inline-block border border-gray-200 shadow-sm mb-3">
+                  <img src="/img/qris-barcode.png" alt="QRIS Barcode" class="w-48 h-48 object-contain mx-auto transition duration-300 group-hover:opacity-90" />
+                  <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 rounded-xl flex items-center justify-center text-white text-xs font-semibold gap-1 backdrop-blur-[1px]">
+                    <Icon icon="mdi:magnify-plus-outline" class="text-lg" /> Klik Preview
+                  </div>
                 </div>
+ 
+                <div class="mb-3">
+                  <button type="button" @click="downloadQrisImage" class="w-full py-2.5 px-4 bg-primary text-white font-semibold text-xs rounded-xl hover:bg-primary-dark transition flex items-center justify-center gap-2 shadow-sm shadow-primary/20 cursor-pointer">
+                    <Icon icon="mdi:download" class="text-base" /> Download QR
+                  </button>
+                </div>
+
                 <p class="text-[10px] text-gray-400">Scan QRIS menggunakan GoPay, OVO, Dana, LinkAja, ShopeePay atau Mobile Banking</p>
               </div>
 
@@ -174,27 +208,58 @@
           </div>
           
           <div v-if="order.status === 'menunggu_pembayaran'">
-            <button @click="router.post(`/pesanan/${order.id}/batal`)" class="w-full py-2.5 bg-red-50 text-danger text-sm font-semibold rounded-xl hover:bg-red-100 transition">Batalkan Pesanan</button>
+            <button @click="router.post(`/pesanan/${order.id}/batal`)" class="w-full py-2.5 bg-red-50 text-danger text-sm font-semibold rounded-xl hover:bg-red-100 transition cursor-pointer">Batalkan Pesanan</button>
           </div>
           <div v-if="order.status === 'dikirim'">
-            <button @click="router.post(`/pesanan/${order.id}/selesai`)" class="w-full py-2.5 bg-green-50 text-success text-sm font-semibold rounded-xl hover:bg-green-100 transition">Pesanan Diterima</button>
+            <button @click="router.post(`/pesanan/${order.id}/selesai`)" class="w-full py-2.5 bg-green-50 text-success text-sm font-semibold rounded-xl hover:bg-green-100 transition cursor-pointer">Pesanan Diterima</button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- MODAL LIGHTBOX PREVIEW QRIS -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showQrisModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" @click.self="showQrisModal = false">
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95" appear>
+          <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center relative shadow-2xl">
+            <button @click="showQrisModal = false" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition">
+              <Icon icon="mdi:close" class="text-xl" />
+            </button>
+            
+            <h3 class="text-base font-bold text-text mb-1">Preview QRIS Code</h3>
+            <p class="text-xs text-gray-500 mb-4">UD Flamboyan - Biskuit Ikan Hulu'u</p>
+
+            <div class="bg-white p-3 border border-gray-200 rounded-2xl shadow-inner mb-5 inline-block">
+              <img src="/img/qris-barcode.png" alt="Preview QRIS Code" class="w-64 h-64 object-contain mx-auto" />
+            </div>
+
+            <div class="flex gap-2">
+              <button @click="downloadQrisImage" class="flex-1 py-2.5 bg-primary text-white font-semibold text-xs rounded-xl hover:bg-primary-dark transition flex items-center justify-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer">
+                <Icon icon="mdi:download" class="text-base" /> Unduh QR Code
+              </button>
+              <button @click="showQrisModal = false" class="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold text-xs rounded-xl hover:bg-gray-50 transition cursor-pointer">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
   </UserLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ order: Object });
 
-// Track review forms dynamically per product id
 const reviewForms = ref({});
+const showQrisModal = ref(false);
+const countdownText = ref('24:00:00');
+let timerInterval = null;
 
 onMounted(() => {
   props.order.items.forEach(item => {
@@ -206,7 +271,48 @@ onMounted(() => {
       };
     }
   });
+
+  if (props.order.status === 'menunggu_pembayaran' && props.order.payment_due_at) {
+    updateCountdown();
+    timerInterval = setInterval(updateCountdown, 1000);
+  }
 });
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval);
+});
+
+function updateCountdown() {
+  if (!props.order.payment_due_at) return;
+  const now = new Date().getTime();
+  const due = new Date(props.order.payment_due_at).getTime();
+  const diff = due - now;
+
+  if (diff <= 0) {
+    countdownText.value = 'Waktu Pembayaran Habis';
+    if (timerInterval) clearInterval(timerInterval);
+    return;
+  }
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  const h = String(hours).padStart(2, '0');
+  const m = String(minutes).padStart(2, '0');
+  const s = String(seconds).padStart(2, '0');
+
+  countdownText.value = `${h}:${m}:${s}`;
+}
+
+function downloadQrisImage() {
+  const link = document.createElement('a');
+  link.href = '/img/qris-barcode.png';
+  link.download = `QRIS-UD-Flamboyan-${props.order.order_code}.png`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function statusClass(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }
@@ -219,10 +325,7 @@ function submitReview(productId) {
     rating: formData.rating,
     comment: formData.comment,
   }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Automatically cleaned up through prop reload
-    }
+    preserveScroll: true
   });
 }
 </script>
