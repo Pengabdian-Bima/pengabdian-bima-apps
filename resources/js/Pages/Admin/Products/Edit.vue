@@ -15,16 +15,24 @@
         </div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label><textarea v-model="form.description" rows="4" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary"></textarea></div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Foto Utama</label>
-          <img v-if="product.thumbnail_url" :src="product.thumbnail_url" class="w-24 h-24 rounded-xl object-cover mb-2 border">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Foto Utama (Klik untuk perbesar)</label>
+          <div v-if="product.thumbnail_url" class="relative inline-block group cursor-pointer" @click="openPreview(product.thumbnail_url)">
+            <img :src="product.thumbnail_url" class="w-24 h-24 rounded-xl object-cover mb-2 border border-gray-200 group-hover:opacity-90 transition">
+            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center text-white text-xs font-semibold gap-1 transition">
+              <Icon icon="mdi:magnify-plus" /> Perbesar
+            </div>
+          </div>
           <input type="file" @change="form.thumbnail = $event.target.files[0]" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary">
         </div>
         <div v-if="product.images?.length">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Galeri Saat Ini</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Galeri Saat Ini (Klik gambar untuk perbesar)</label>
           <div class="flex gap-2 flex-wrap">
-            <div v-for="img in product.images" :key="img.id" class="relative group">
-              <img :src="img.url" class="w-20 h-20 rounded-lg object-cover border">
-              <button type="button" @click="deleteImage(img.id)" class="absolute -top-2 -right-2 w-5 h-5 bg-danger text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">×</button>
+            <div v-for="img in product.images" :key="img.id" class="relative group cursor-pointer" @click="openPreview(img.url)">
+              <img :src="img.url" class="w-20 h-20 rounded-lg object-cover border border-gray-200 group-hover:opacity-90 transition">
+              <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center text-white text-xs gap-1 transition">
+                <Icon icon="mdi:magnify-plus" />
+              </div>
+              <button type="button" @click.stop="deleteImage(img.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-danger text-white rounded-full text-xs flex items-center justify-center opacity-90 hover:opacity-100 shadow z-10" title="Hapus Gambar">×</button>
             </div>
           </div>
         </div>
@@ -32,18 +40,143 @@
         <button type="submit" :disabled="form.processing" class="px-8 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50">{{ form.processing ? 'Menyimpan...' : 'Update Produk' }}</button>
       </form>
     </div>
+
+    <!-- Lightbox Preview Modal -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="showPreview && allImages.length" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 md:p-8" @click.self="showPreview = false">
+        <!-- Close button -->
+        <button 
+          type="button"
+          @click="showPreview = false" 
+          class="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition z-50 cursor-pointer"
+          title="Tutup"
+        >
+          <Icon icon="mdi:close" class="text-2xl" />
+        </button>
+
+        <!-- Navigation Arrow Left -->
+        <button 
+          type="button"
+          v-if="allImages.length > 1"
+          @click="prevImage" 
+          class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition z-45 cursor-pointer"
+          title="Sebelumnya"
+        >
+          <Icon icon="mdi:chevron-left" class="text-3xl" />
+        </button>
+
+        <!-- Main Large Image Container -->
+        <div class="relative max-w-4xl max-h-[80vh] flex flex-col items-center justify-center select-none">
+          <img 
+            :src="allImages[activeIndex]" 
+            :alt="product.name" 
+            class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl border border-white/5"
+          >
+          <!-- Counter badge -->
+          <span class="mt-4 px-4 py-1.5 bg-white/10 text-white rounded-full text-xs font-semibold">
+            {{ activeIndex + 1 }} / {{ allImages.length }}
+          </span>
+        </div>
+
+        <!-- Navigation Arrow Right -->
+        <button 
+          type="button"
+          v-if="allImages.length > 1"
+          @click="nextImage" 
+          class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition z-45 cursor-pointer"
+          title="Berikutnya"
+        >
+          <Icon icon="mdi:chevron-right" class="text-3xl" />
+        </button>
+      </div>
+    </Transition>
   </AdminLayout>
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
 const props = defineProps({ product: Object, categories: Array });
+
 const form = useForm({
-  _method: 'PUT', name: props.product.name, category_id: props.product.category_id, description: props.product.description || '',
-  price: props.product.price, cost_price: props.product.cost_price, weight: props.product.weight, status: props.product.status, thumbnail: null, gallery: [],
+  _method: 'PUT',
+  name: props.product.name,
+  category_id: props.product.category_id,
+  description: props.product.description || '',
+  price: props.product.price,
+  cost_price: props.product.cost_price,
+  weight: props.product.weight,
+  status: props.product.status,
+  thumbnail: null,
+  gallery: [],
 });
+
+// Lightbox state
+const showPreview = ref(false);
+const activeIndex = ref(0);
+
+const allImages = computed(() => {
+  const imgs = [];
+  if (props.product.thumbnail_url) {
+    imgs.push(props.product.thumbnail_url);
+  }
+  if (props.product.images) {
+    props.product.images.forEach(img => {
+      if (img.url && !imgs.includes(img.url)) {
+        imgs.push(img.url);
+      }
+    });
+  }
+  return imgs;
+});
+
+function openPreview(url) {
+  let index = allImages.value.indexOf(url);
+  if (index === -1) {
+    index = allImages.value.findIndex(i => i === url || i.includes(url) || url.includes(i));
+  }
+  if (index === -1) {
+    index = 0;
+  }
+  activeIndex.value = index;
+  showPreview.value = true;
+}
+
+function prevImage() {
+  if (allImages.value.length === 0) return;
+  activeIndex.value = (activeIndex.value - 1 + allImages.value.length) % allImages.value.length;
+}
+
+function nextImage() {
+  if (allImages.value.length === 0) return;
+  activeIndex.value = (activeIndex.value + 1) % allImages.value.length;
+}
+
+function handleKeyDown(e) {
+  if (!showPreview.value) return;
+  if (e.key === 'ArrowLeft') prevImage();
+  if (e.key === 'ArrowRight') nextImage();
+  if (e.key === 'Escape') showPreview.value = false;
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
 function submit() { form.post(`/admin/products/${props.product.id}`, { forceFormData: true }); }
 function deleteImage(id) { if(confirm('Hapus gambar?')) router.delete(`/admin/product-images/${id}`); }
 </script>

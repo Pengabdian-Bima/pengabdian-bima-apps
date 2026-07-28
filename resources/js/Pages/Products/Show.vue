@@ -12,13 +12,38 @@
 
       <div class="grid lg:grid-cols-2 gap-10">
         <div>
-          <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800">
-            <img v-if="product.thumbnail_url" :src="product.thumbnail_url" :alt="product.name" class="w-full h-full object-cover">
+          <!-- Main Display Image -->
+          <div 
+            class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800 cursor-pointer group relative" 
+            @click="currentMainImage && openPreview(currentMainImage)"
+          >
+            <img v-if="currentMainImage" :src="currentMainImage" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
             <Icon v-else icon="mdi:food-croissant" class="text-[100px] text-primary/30" />
+            <div v-if="currentMainImage" class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 text-white font-semibold text-sm gap-2">
+              <Icon icon="mdi:magnify-plus" class="text-2xl" /> Klik untuk Perbesar
+            </div>
           </div>
-          <div v-if="product.images?.length" class="flex gap-3 mt-4 overflow-x-auto pb-2">
-            <div v-for="img in product.images" :key="img.id" class="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 flex-shrink-0 cursor-pointer hover:border-primary transition">
-              <img :src="img.url" class="w-full h-full object-cover">
+
+          <!-- Thumbnails (Main + Gallery) -->
+          <div v-if="allImages.length > 1" class="flex gap-3 mt-4 overflow-x-auto pb-2">
+            <div 
+              v-for="(img, idx) in allImages" 
+              :key="idx" 
+              @click="currentMainImage = img"
+              :class="[
+                'w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 cursor-pointer transition relative group',
+                currentMainImage === img ? 'border-primary shadow-md scale-105' : 'border-gray-200 dark:border-gray-700 hover:border-primary/50'
+              ]"
+            >
+              <img :src="img" class="w-full h-full object-cover">
+              <button 
+                type="button"
+                @click.stop="openPreview(img)"
+                class="absolute bottom-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-md text-xs opacity-0 group-hover:opacity-100 transition"
+                title="Perbesar Foto Ini"
+              >
+                <Icon icon="mdi:fullscreen" />
+              </button>
             </div>
           </div>
         </div>
@@ -80,12 +105,69 @@
           </Link>
         </div>
       </div>
+
+      <!-- Lightbox Preview Modal -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="showPreview && allImages.length" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 md:p-8" @click.self="showPreview = false">
+          <!-- Close button -->
+          <button 
+            type="button"
+            @click="showPreview = false" 
+            class="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition z-50 cursor-pointer"
+            title="Tutup"
+          >
+            <Icon icon="mdi:close" class="text-2xl" />
+          </button>
+
+          <!-- Navigation Arrow Left -->
+          <button 
+            type="button"
+            v-if="allImages.length > 1"
+            @click="prevImage" 
+            class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition z-45 cursor-pointer"
+            title="Sebelumnya"
+          >
+            <Icon icon="mdi:chevron-left" class="text-3xl" />
+          </button>
+
+          <!-- Main Large Image Container -->
+          <div class="relative max-w-4xl max-h-[80vh] flex flex-col items-center justify-center select-none">
+            <img 
+              :src="allImages[activeIndex]" 
+              :alt="product.name" 
+              class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl border border-white/5"
+            >
+            <!-- Counter badge -->
+            <span class="mt-4 px-4 py-1.5 bg-white/10 text-white rounded-full text-xs font-semibold">
+              {{ activeIndex + 1 }} / {{ allImages.length }}
+            </span>
+          </div>
+
+          <!-- Navigation Arrow Right -->
+          <button 
+            type="button"
+            v-if="allImages.length > 1"
+            @click="nextImage" 
+            class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition z-45 cursor-pointer"
+            title="Berikutnya"
+          >
+            <Icon icon="mdi:chevron-right" class="text-3xl" />
+          </button>
+        </div>
+      </Transition>
     </div>
   </UserLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
@@ -93,6 +175,73 @@ import UserLayout from '@/Layouts/UserLayout.vue';
 const props = defineProps({ product: Object, relatedProducts: Array });
 const qty = ref(1);
 const addingToCart = ref(false);
+
+const currentMainImage = ref(props.product.thumbnail_url || null);
+
+// Lightbox state
+const showPreview = ref(false);
+const activeIndex = ref(0);
+
+// Combine thumbnail and gallery images into one unique list for the previewer
+const allImages = computed(() => {
+  const imgs = [];
+  if (props.product.thumbnail_url) {
+    imgs.push(props.product.thumbnail_url);
+  }
+  if (props.product.images) {
+    props.product.images.forEach(img => {
+      if (img.url && !imgs.includes(img.url)) {
+        imgs.push(img.url);
+      }
+    });
+  }
+  return imgs;
+});
+
+watch(() => props.product, (newP) => {
+  if (newP?.thumbnail_url) {
+    currentMainImage.value = newP.thumbnail_url;
+  } else if (allImages.value.length > 0) {
+    currentMainImage.value = allImages.value[0];
+  }
+}, { immediate: true });
+
+function openPreview(url) {
+  let index = allImages.value.indexOf(url);
+  if (index === -1) {
+    index = allImages.value.findIndex(i => i === url || i.includes(url) || url.includes(i));
+  }
+  if (index === -1) {
+    index = 0;
+  }
+  activeIndex.value = index;
+  showPreview.value = true;
+}
+
+function prevImage() {
+  if (allImages.value.length === 0) return;
+  activeIndex.value = (activeIndex.value - 1 + allImages.value.length) % allImages.value.length;
+}
+
+function nextImage() {
+  if (allImages.value.length === 0) return;
+  activeIndex.value = (activeIndex.value + 1) % allImages.value.length;
+}
+
+function handleKeyDown(e) {
+  if (!showPreview.value) return;
+  if (e.key === 'ArrowLeft') prevImage();
+  if (e.key === 'ArrowRight') nextImage();
+  if (e.key === 'Escape') showPreview.value = false;
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 
 function formatPrice(price) { return Number(price).toLocaleString('id-ID'); }
 
