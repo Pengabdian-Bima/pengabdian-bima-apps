@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\CashierController;
+use App\Http\Controllers\PreOrderController;
+use App\Http\Controllers\Admin\PreOrderController as AdminPreOrderController;
 
 // Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -63,6 +65,16 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/api/shipping-cost', [RajaOngkirController::class, 'calculateCost'])->name('rajaongkir.cost');
     Route::post('/ulasan', [ReviewController::class, 'store'])->name('reviews.store');
+
+    // Pre-Order
+    Route::get('/pre-order', [PreOrderController::class, 'index'])->name('pre-orders.index');
+    Route::get('/pre-order/buat', [PreOrderController::class, 'create'])->name('pre-orders.create');
+    Route::post('/pre-order', [PreOrderController::class, 'store'])->name('pre-orders.store');
+    Route::get('/pre-order/{preOrder}', [PreOrderController::class, 'show'])->name('pre-orders.show');
+    Route::get('/pre-order/{preOrder}/pengiriman', [PreOrderController::class, 'selectShipping'])->name('pre-orders.select-shipping');
+    Route::post('/pre-order/{preOrder}/pengiriman', [PreOrderController::class, 'storeShipping'])->name('pre-orders.store-shipping');
+    Route::post('/pre-order/{preOrder}/bayar', [PreOrderController::class, 'storePayment'])->name('pre-orders.store-payment');
+    Route::post('/pre-order/{preOrder}/batal', [PreOrderController::class, 'cancel'])->name('pre-orders.cancel');
 });
 
 // Admin
@@ -101,4 +113,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('profile', [AdminProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [AdminProfileController::class, 'update'])->name('profile.update');
     Route::put('profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    // Pre-Order (Admin)
+    Route::get('pre-orders', [AdminPreOrderController::class, 'index'])->name('pre-orders.index');
+    Route::get('pre-orders/{preOrder}', [AdminPreOrderController::class, 'show'])->name('pre-orders.show');
+    Route::put('pre-orders/{preOrder}/accept', [AdminPreOrderController::class, 'accept'])->name('pre-orders.accept');
+    Route::put('pre-orders/{preOrder}/reject', [AdminPreOrderController::class, 'reject'])->name('pre-orders.reject');
+    Route::put('pre-orders/{preOrder}/complete', [AdminPreOrderController::class, 'complete'])->name('pre-orders.complete');
 });

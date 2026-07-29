@@ -133,6 +133,7 @@ const menuItems = computed(() => {
     { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
     { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
     { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
+    { href: '/admin/pre-orders', label: 'Pre-Order', icon: 'mdi:clipboard-list-outline' },
     { href: '/admin/reports', label: 'Laporan', icon: 'mdi:chart-bar' },
   ];
 });

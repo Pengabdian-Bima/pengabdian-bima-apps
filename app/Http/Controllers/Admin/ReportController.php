@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PreOrder;
+use App\Models\PreOrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,11 +31,13 @@ class ReportController extends Controller
         };
 
         $completedOrders = Order::where('status', 'selesai');
+        $completedPreOrders = PreOrder::where('status', 'completed');
         if ($startDate) {
             $completedOrders->where('created_at', '>=', $startDate);
+            $completedPreOrders->where('created_at', '>=', $startDate);
         }
 
-        $totalSales = (clone $completedOrders)->sum('total_amount');
+        $totalSales = (clone $completedOrders)->sum('total_amount') + (clone $completedPreOrders)->sum('total_amount');
         
         $orderItemsQuery = OrderItem::whereHas('order', function($q) use ($startDate) {
             $q->where('status', 'selesai');
@@ -42,29 +46,106 @@ class ReportController extends Controller
             }
         });
 
-        $totalCost = (clone $orderItemsQuery)
+        $preOrderItemsQuery = PreOrderItem::whereHas('preOrder', function($q) use ($startDate) {
+            $q->where('status', 'completed');
+            if ($startDate) {
+                $q->where('created_at', '>=', $startDate);
+            }
+        });
+
+        $totalOrderCost = (clone $orderItemsQuery)
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->selectRaw('SUM(order_items.qty * products.cost_price) as total_cost')->value('total_cost') ?? 0;
+
+        $totalPreOrderCost = (clone $preOrderItemsQuery)
+            ->join('products', 'pre_order_items.product_id', '=', 'products.id')
+            ->selectRaw('SUM(pre_order_items.qty * products.cost_price) as total_cost')->value('total_cost') ?? 0;
             
+        $totalCost = $totalOrderCost + $totalPreOrderCost;
         $profit = $totalSales - $totalCost;
-        $orderCount = (clone $completedOrders)->count();
+        $orderCount = (clone $completedOrders)->count() + (clone $completedPreOrders)->count();
 
-        $bestSelling = (clone $orderItemsQuery)
+        // Best Selling combining both
+        $bestSellingOrders = (clone $orderItemsQuery)
             ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
-            ->groupBy('product_id')->with('product:id,name')->orderByDesc('total_qty')->take(10)->get()
-            ->map(fn($item) => [
-                'product_name' => $item->product?->name ?? 'Produk Dihapus',
-                'total_qty' => $item->total_qty,
-                'total_revenue' => $item->total_revenue,
-            ]);
+            ->groupBy('product_id')
+            ->get();
 
-        $salesDataQuery = Order::where('status', 'selesai');
-        if ($startDate) {
-            $salesDataQuery->where('created_at', '>=', $startDate);
+        $bestSellingPreOrders = (clone $preOrderItemsQuery)
+            ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
+            ->groupBy('product_id')
+            ->get();
+
+        $mergedBest = [];
+        foreach ($bestSellingOrders as $item) {
+            $mergedBest[$item->product_id] = [
+                'product_id' => $item->product_id,
+                'total_qty' => (int)$item->total_qty,
+                'total_revenue' => (float)$item->total_revenue,
+            ];
         }
-        $salesData = $salesDataQuery
+        foreach ($bestSellingPreOrders as $item) {
+            if (isset($mergedBest[$item->product_id])) {
+                $mergedBest[$item->product_id]['total_qty'] += (int)$item->total_qty;
+                $mergedBest[$item->product_id]['total_revenue'] += (float)$item->total_revenue;
+            } else {
+                $mergedBest[$item->product_id] = [
+                    'product_id' => $item->product_id,
+                    'total_qty' => (int)$item->total_qty,
+                    'total_revenue' => (float)$item->total_revenue,
+                ];
+            }
+        }
+
+        $productsMap = Product::whereIn('id', array_keys($mergedBest))->get()->keyBy('id');
+        $bestSelling = collect($mergedBest)
+            ->map(function($item) use ($productsMap) {
+                return [
+                    'product_name' => $productsMap->get($item['product_id'])?->name ?? 'Produk Dihapus',
+                    'total_qty' => $item['total_qty'],
+                    'total_revenue' => $item['total_revenue'],
+                ];
+            })
+            ->sortByDesc('total_qty')
+            ->take(10)
+            ->values();
+
+        // Combine Sales chart data
+        $salesDataOrdersQuery = Order::where('status', 'selesai');
+        $salesDataPreOrdersQuery = PreOrder::where('status', 'completed');
+        if ($startDate) {
+            $salesDataOrdersQuery->where('created_at', '>=', $startDate);
+            $salesDataPreOrdersQuery->where('created_at', '>=', $startDate);
+        }
+        $salesDataOrders = $salesDataOrdersQuery
             ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total, COUNT(*) as count')
-            ->groupBy('date')->orderBy('date')->get();
+            ->groupBy('date')->get();
+
+        $salesDataPreOrders = $salesDataPreOrdersQuery
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total, COUNT(*) as count')
+            ->groupBy('date')->get();
+
+        $mergedSales = [];
+        foreach ($salesDataOrders as $sd) {
+            $mergedSales[$sd->date] = [
+                'date' => $sd->date,
+                'total' => (float)$sd->total,
+                'count' => (int)$sd->count,
+            ];
+        }
+        foreach ($salesDataPreOrders as $sd) {
+            if (isset($mergedSales[$sd->date])) {
+                $mergedSales[$sd->date]['total'] += (float)$sd->total;
+                $mergedSales[$sd->date]['count'] += (int)$sd->count;
+            } else {
+                $mergedSales[$sd->date] = [
+                    'date' => $sd->date,
+                    'total' => (float)$sd->total,
+                    'count' => (int)$sd->count,
+                ];
+            }
+        }
+        $salesData = collect($mergedSales)->sortBy('date')->values();
 
         return Inertia::render('Admin/Reports/Index', [
             'stats' => compact('totalSales', 'totalCost', 'profit', 'orderCount'),
@@ -120,14 +201,31 @@ class ReportController extends Controller
             default => now()->startOfMonth(),
         };
 
-        $query = Order::with(['items.product', 'user'])->where('status', 'selesai');
+        $ordersQuery = Order::with(['items.product', 'user'])->where('status', 'selesai');
+        $preOrdersQuery = PreOrder::with(['items.product', 'user'])->where('status', 'completed');
         if ($startDate) {
-            $query->where('created_at', '>=', $startDate);
+            $ordersQuery->where('created_at', '>=', $startDate);
+            $preOrdersQuery->where('created_at', '>=', $startDate);
         }
-        $orders = $query->get();
-        $totalSales = $orders->sum('total_amount');
+        
+        $orders = $ordersQuery->get();
+        $preOrders = $preOrdersQuery->get();
 
-        $pdf = Pdf::loadView('reports.sales-pdf', compact('orders', 'totalSales', 'period'));
+        // Convert preOrders code key so view behaves nicely
+        $mappedPreOrders = $preOrders->map(function($po) {
+            $po->order_code = $po->po_code; // alias order_code to po_code
+            return $po;
+        });
+
+        $combined = $orders->concat($mappedPreOrders)->sortByDesc('created_at');
+        $totalSales = $combined->sum('total_amount');
+
+        $pdf = Pdf::loadView('reports.sales-pdf', [
+            'orders' => $combined,
+            'totalSales' => $totalSales,
+            'period' => $period
+        ]);
+        
         return $pdf->download('laporan-penjualan-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -149,16 +247,41 @@ class ReportController extends Controller
             default => now()->startOfMonth(),
         };
 
-        $query = OrderItem::whereHas('order', function($q) use ($startDate) {
-            $q->where('status', 'selesai');
-            if ($startDate) {
-                $q->where('created_at', '>=', $startDate);
-            }
-        });
+        $orderItems = OrderItem::whereHas('order', fn($q) => $q->where('status', 'selesai')->where('created_at', '>=', $startDate))
+            ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
+            ->groupBy('product_id')
+            ->with('product:id,name')
+            ->get();
 
-        $bestSelling = $query->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
-            ->groupBy('product_id')->with('product:id,name')->orderByDesc('total_qty')->get()
-            ->map(fn($item) => ['product_name' => $item->product?->name ?? 'Produk Dihapus', 'total_qty' => $item->total_qty, 'total_revenue' => $item->total_revenue]);
+        $preOrderItems = PreOrderItem::whereHas('preOrder', fn($q) => $q->where('status', 'completed')->where('created_at', '>=', $startDate))
+            ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
+            ->groupBy('product_id')
+            ->with('product:id,name')
+            ->get();
+
+        $merged = [];
+        foreach ($orderItems as $item) {
+            $merged[$item->product_id] = [
+                'product_name' => $item->product?->name ?? 'Produk Dihapus',
+                'total_qty' => $item->total_qty,
+                'total_revenue' => $item->total_revenue,
+            ];
+        }
+
+        foreach ($preOrderItems as $item) {
+            if (isset($merged[$item->product_id])) {
+                $merged[$item->product_id]['total_qty'] += $item->total_qty;
+                $merged[$item->product_id]['total_revenue'] += $item->total_revenue;
+            } else {
+                $merged[$item->product_id] = [
+                    'product_name' => $item->product?->name ?? 'Produk Dihapus',
+                    'total_qty' => $item->total_qty,
+                    'total_revenue' => $item->total_revenue,
+                ];
+            }
+        }
+
+        $bestSelling = collect(array_values($merged))->sortByDesc('total_qty')->values();
 
         $pdf = Pdf::loadView('reports.best-selling-pdf', compact('bestSelling', 'period'));
         return $pdf->download('produk-terlaris-' . now()->format('Y-m-d') . '.pdf');
@@ -201,8 +324,16 @@ class ReportController extends Controller
                     }
                 });
 
-            $totalQty = (clone $query)->sum('qty') ?? 0;
-            $totalRevenue = (clone $query)->sum('subtotal') ?? 0;
+            $preOrderQuery = PreOrderItem::where('product_id', $p->id)
+                ->whereHas('preOrder', function ($q) use ($startDate) {
+                    $q->where('status', 'completed');
+                    if ($startDate) {
+                        $q->where('created_at', '>=', $startDate);
+                    }
+                });
+
+            $totalQty = (clone $query)->sum('qty') + (clone $preOrderQuery)->sum('qty');
+            $totalRevenue = (clone $query)->sum('subtotal') + (clone $preOrderQuery)->sum('subtotal');
             $totalCost = $totalQty * $p->cost_price;
             $netProfit = $totalRevenue - $totalCost;
             $margin = $totalRevenue > 0 ? round(($netProfit / $totalRevenue) * 100, 1) : 0;
@@ -224,7 +355,7 @@ class ReportController extends Controller
             ];
         })->sortByDesc('total_revenue')->values();
 
-        // Compute Conclusion / Kesimpulan Laporan
+        // Compute Conclusion
         $topSeller = (clone $productData)->sortByDesc('total_qty')->first(fn($p) => $p['total_qty'] > 0);
         $topRevenue = (clone $productData)->sortByDesc('total_revenue')->first(fn($p) => $p['total_revenue'] > 0);
         $topProfit = (clone $productData)->sortByDesc('net_profit')->first(fn($p) => $p['net_profit'] > 0);

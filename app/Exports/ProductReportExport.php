@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\PreOrderItem;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -41,8 +42,16 @@ class ProductReportExport implements FromCollection, WithHeadings, WithMapping, 
                     }
                 });
 
-            $totalQty = (clone $query)->sum('qty') ?? 0;
-            $totalRevenue = (clone $query)->sum('subtotal') ?? 0;
+            $preOrderQuery = PreOrderItem::where('product_id', $p->id)
+                ->whereHas('preOrder', function ($q) use ($startDate) {
+                    $q->where('status', 'completed');
+                    if ($startDate) {
+                        $q->where('created_at', '>=', $startDate);
+                    }
+                });
+
+            $totalQty = (clone $query)->sum('qty') + (clone $preOrderQuery)->sum('qty');
+            $totalRevenue = (clone $query)->sum('subtotal') + (clone $preOrderQuery)->sum('subtotal');
             $totalCost = $totalQty * $p->cost_price;
             $netProfit = $totalRevenue - $totalCost;
             $margin = $totalRevenue > 0 ? round(($netProfit / $totalRevenue) * 100, 1) : 0;
@@ -103,7 +112,6 @@ class ProductReportExport implements FromCollection, WithHeadings, WithMapping, 
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Formatting title & summary if needed
                 $event->sheet->getDelegate()->getStyle('A1:K1')->getFont()->setBold(true);
             },
         ];

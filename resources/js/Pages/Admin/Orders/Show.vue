@@ -101,16 +101,16 @@
           </div>
         </div>
 
-        <!-- Lihat Struk (Kasir Offline) -->
-        <div v-if="order.payment_method === 'tunai'" class="bg-white rounded-2xl border border-gray-100 p-6">
+        <!-- Lihat Struk (Kasir Offline & Online) -->
+        <div v-if="!['dibatalkan', 'ditolak'].includes(order.status)" class="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 class="font-semibold text-text mb-3 flex items-center gap-2">
             <Icon icon="mdi:receipt-text-outline" class="text-primary text-xl" />
             Struk Kasir
           </h2>
-          <p class="text-xs text-gray-500 mb-4">Pesanan ini merupakan transaksi tunai offline. Anda dapat melihat atau mencetak ulang struk kasir.</p>
+          <p class="text-xs text-gray-500 mb-4">Anda dapat melihat atau mencetak struk pemesanan ini.</p>
           <button @click="showReceiptModal = true" class="w-full py-2.5 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-pointer">
             <Icon icon="mdi:printer-eye" class="text-lg" />
-            Lihat & Cetak Struk
+            Lihat &amp; Cetak Struk
           </button>
         </div>
       </div>
@@ -288,12 +288,10 @@ function printOrderReceipt() {
           td { padding: 2px 0; vertical-align: top; }
         </style>
       </head>
-      <body>
-        ${printContent}
-        <script>window.onload=function(){window.print();window.close();};<\/script>
-      </body>
+      <body>${printContent}</body>
     </html>
   `);
   printWindow.document.close();
+  setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
 }
 </script>

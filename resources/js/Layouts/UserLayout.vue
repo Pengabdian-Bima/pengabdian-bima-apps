@@ -45,6 +45,9 @@
                       <Link href="/pesanan" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <Icon icon="mdi:package-variant-closed" class="text-lg" /> Pesanan Saya
                       </Link>
+                      <Link href="/pre-order" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:clipboard-list-outline" class="text-lg" /> Pre-Order Saya
+                      </Link>
                       <Link href="/profil" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <Icon icon="mdi:account-outline" class="text-lg" /> Profil
                       </Link>
