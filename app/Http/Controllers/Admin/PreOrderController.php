@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PreOrder;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PreOrderController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index(Request $request)
     {
         $query = PreOrder::with('user');
@@ -105,6 +113,12 @@ class PreOrderController extends Controller
             'rejection_reason' => null,
         ]);
 
+        $this->fonnteService->sendCustomerStatusNotification(
+            $preOrder,
+            'DITERIMA',
+            "Pre-Order Anda telah disetujui! Estimasi pengerjaan: {$request->estimated_days} hari. Silakan lanjutkan ke pemrosesan pengiriman & pembayaran di aplikasi."
+        );
+
         return back()->with('success', 'Pre-Order berhasil diterima. Pelanggan akan segera dihubungi.');
     }
 
@@ -123,6 +137,12 @@ class PreOrderController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
+        $this->fonnteService->sendCustomerStatusNotification(
+            $preOrder,
+            'DITOLAK',
+            "Alasan penolakan: {$request->rejection_reason}"
+        );
+
         return back()->with('success', 'Pre-Order berhasil ditolak.');
     }
 
@@ -133,6 +153,12 @@ class PreOrderController extends Controller
         }
 
         $preOrder->update(['status' => 'completed']);
+
+        $this->fonnteService->sendCustomerStatusNotification(
+            $preOrder,
+            'SELESAI',
+            "Pesanan Pre-Order Anda telah selesai diproses dan dikirim. Terima kasih telah berbelanja!"
+        );
 
         return back()->with('success', 'Pre-Order berhasil ditandai selesai!');
     }

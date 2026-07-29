@@ -41,4 +41,9 @@ return [
         'origin' => env('RAJAONGKIR_ORIGIN', 128), // default Gorontalo
     ],
 
+    'fonnte' => [
+        'token' => env('FONNTE_TOKEN'),
+        'target_phone' => env('FONNTE_TARGET_PHONE'),
+    ],
+
 ];

@@ -6,11 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\PreOrder;
 use App\Models\PreOrderItem;
 use App\Models\Product;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PreOrderController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index()
     {
         $preOrders = PreOrder::where('user_id', auth()->id())
@@ -108,6 +116,9 @@ class PreOrderController extends Controller
                 'subtotal'     => $product->price * $item['qty'],
             ]);
         }
+
+        // Send WhatsApp notification via Fonnte
+        $this->fonnteService->sendNewPreOrderNotification($po);
 
         return redirect()->route('pre-orders.show', $po->id)
             ->with('success', 'Pre-Order berhasil dibuat! Kami akan segera menghubungi Anda.');
