@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
             'cartCount' => fn () => $request->user()
                 ? \App\Models\CartItem::whereHas('cart', fn ($q) => $q->where('user_id', $request->user()->id))->sum('qty')
                 : 0,
+            'fonntePhone' => config('services.fonnte.phone') ?: config('services.fonnte.target_phone') ?: '6281356578805',
         ];
     }
 }

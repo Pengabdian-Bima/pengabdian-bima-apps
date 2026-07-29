@@ -6,12 +6,20 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StockHistory;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CheckoutController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index()
     {
         if (auth()->check() && auth()->user()->role !== 'user') {
@@ -151,11 +159,13 @@ class CheckoutController extends Controller
             return back()->with('error', 'Layanan kurir atau ongkos kirim tidak valid.');
         }
 
-        DB::transaction(function () use ($request, $cart, $shippingData, $calculatedCost) {
+        $createdOrder = null;
+
+        DB::transaction(function () use ($request, $cart, $shippingData, $calculatedCost, &$createdOrder) {
             $subtotal = $cart->items->sum(fn ($item) => $item->qty * $item->product->final_price);
             $total = $subtotal + $calculatedCost;
 
-            $order = Order::create(array_merge([
+            $createdOrder = Order::create(array_merge([
                 'user_id' => auth()->id(),
                 'order_code' => Order::generateOrderCode(),
                 'total_amount' => $total,
@@ -170,7 +180,7 @@ class CheckoutController extends Controller
             foreach ($cart->items as $item) {
                 $effectivePrice = $item->product->final_price;
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id' => $createdOrder->id,
                     'product_id' => $item->product_id,
                     'qty' => $item->qty,
                     'price' => $effectivePrice,
@@ -188,13 +198,17 @@ class CheckoutController extends Controller
                     'quantity' => $item->qty,
                     'stock_before' => $stockBefore,
                     'stock_after' => $product->stock,
-                    'note' => "Pesanan #{$order->order_code}",
+                    'note' => "Pesanan #{$createdOrder->order_code}",
                 ]);
             }
 
             // Clear cart
             $cart->items()->delete();
         });
+
+        if ($createdOrder) {
+            $this->fonnteService->sendNewOrderNotification($createdOrder);
+        }
 
         return redirect()->route('orders.index')->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
     }

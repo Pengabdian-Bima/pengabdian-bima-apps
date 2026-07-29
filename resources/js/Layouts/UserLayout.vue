@@ -157,7 +157,7 @@
               <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary transition-colors duration-300">
                 <Icon icon="mdi:facebook" class="text-xl" />
               </a>
-              <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary transition-colors duration-300">
+              <a :href="whatsappUrl" target="_blank" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors duration-300">
                 <Icon icon="mdi:whatsapp" class="text-xl" />
               </a>
             </div>
@@ -172,15 +172,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
+const page = usePage();
 const showMenu = ref(false);
 const mobileMenu = ref(false);
 const profileMenu = ref(null);
 const isDark = ref(false);
 const searchQuery = ref('');
+
+const whatsappUrl = computed(() => {
+  let phone = page.props.fonntePhone || '6281356578805';
+  phone = phone.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.slice(1);
+  }
+  return `https://wa.me/${phone}?text=${encodeURIComponent('Halo Admin UD Flamboyan!')}`;
+});
 
 function submitSearch() {
   if (searchQuery.value.trim()) {
@@ -205,8 +215,6 @@ const navItems = [
   { href: '/produk', label: 'Produk' },
   { href: '/artikel', label: 'Artikel' },
 ];
-
-const page = usePage();
 
 function isActive(href) {
   if (href === '/') return page.url === '/';

@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index(Request $request)
     {
         $query = Order::with(['user', 'paymentConfirmation']);
@@ -145,6 +153,29 @@ class OrderController extends Controller
 
         $order->status = $newStatus;
         $order->save();
+
+        // Send WA status notification to customer
+        $statusTitles = [
+            'diproses'   => 'DIPROSES',
+            'dikirim'    => 'DIKIRIM',
+            'selesai'    => 'SELESAI',
+            'ditolak'    => 'DITOLAK',
+            'dibatalkan' => 'DIBATALKAN',
+        ];
+
+        $extraInfos = [
+            'diproses'   => 'Pembayaran Anda telah diverifikasi. Pesanan sedang diproses dan dikemas.',
+            'dikirim'    => 'Pesanan Anda telah diserahkan ke jasa kurir ekspedisi untuk dikirim.',
+            'selesai'    => 'Pesanan Anda telah selesai. Terima kasih telah berbelanja di UD Flamboyan!',
+            'ditolak'    => $request->rejection_reason ? "Alasan: {$request->rejection_reason}" : null,
+            'dibatalkan' => 'Pesanan ini telah dibatalkan.',
+        ];
+
+        $this->fonnteService->sendOrderStatusNotification(
+            $order,
+            $statusTitles[$newStatus] ?? strtoupper($newStatus),
+            $extraInfos[$newStatus] ?? null
+        );
         
         return back()->with('success', 'Status pesanan berhasil diperbarui!');
     }

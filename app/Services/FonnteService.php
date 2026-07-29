@@ -2,17 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\Order;
 use App\Models\PreOrder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FonnteService
 {
+    protected bool $enabled;
     protected ?string $token;
     protected ?string $defaultTarget;
 
     public function __construct()
     {
+        $this->enabled = (bool) config('services.fonnte.enabled', true);
         $this->token = config('services.fonnte.token');
         $this->defaultTarget = config('services.fonnte.target_phone');
     }
@@ -26,6 +29,11 @@ class FonnteService
      */
     public function sendMessage(?string $target, string $message): bool
     {
+        if (!$this->enabled) {
+            Log::info('Fonnte WhatsApp notification skipped: FONNTE_ENABLED is set to false.');
+            return false;
+        }
+
         $targetNumber = $target ?: $this->defaultTarget;
 
         if (empty($this->token)) {
@@ -148,5 +156,126 @@ class FonnteService
             . "_Pesan ini dikirim otomatis oleh sistem._";
 
         $this->sendMessage($preOrder->shipping_phone, $message);
+    }
+
+    /**
+     * Send new Order notification to Admin / Target number registered in system.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendNewOrderNotification(Order $order): void
+    {
+        $order->loadMissing(['items.product', 'user']);
+
+        $itemListStr = "";
+        foreach ($order->items as $index => $item) {
+            $num = $index + 1;
+            $subtotal = number_format($item->subtotal, 0, ',', '.');
+            $price = number_format($item->price, 0, ',', '.');
+            $itemListStr .= "{$num}. *{$item->product_name}*\n   Qty: {$item->qty} x Rp {$price} = Rp {$subtotal}\n";
+        }
+
+        $totalFormatted = number_format($order->total_amount, 0, ',', '.');
+        $shippingCostFormatted = number_format($order->shipping_cost ?? 0, 0, ',', '.');
+        $dateFormatted = $order->created_at ? $order->created_at->format('d M Y H:i') : now()->format('d M Y H:i');
+
+        $fullAddress = array_filter([
+            $order->shipping_address,
+            $order->shipping_village,
+            $order->shipping_district,
+            $order->shipping_city,
+            $order->shipping_province,
+            $order->shipping_postal_code,
+        ]);
+        $addressStr = implode(', ', $fullAddress);
+
+        $notes = $order->notes ? $order->notes : '-';
+        $courierStr = strtoupper($order->courier ?? '-') . ' (' . ($order->courier_service ?? '-') . ')';
+        $paymentMethodStr = strtoupper($order->payment_method ?? '-');
+
+        $adminMessage = "🛍️ *NOTIFIKASI PESANAN BARU* 🛍️\n\n"
+            . "Ada pesanan baru yang masuk di toko online!\n\n"
+            . "*Detail Pesanan:*\n"
+            . "• Kode Pesanan: *#{$order->order_code}*\n"
+            . "• Tanggal: {$dateFormatted}\n"
+            . "• Nama Pemesan: *{$order->shipping_name}*\n"
+            . "• No. HP Pemesan: {$order->shipping_phone}\n\n"
+            . "*Rincian Produk:*\n"
+            . "{$itemListStr}\n"
+            . "*Ongkos Kirim ({$courierStr}):* Rp {$shippingCostFormatted}\n"
+            . "*Total Transaksi:* Rp {$totalFormatted}\n"
+            . "*Metode Pembayaran:* {$paymentMethodStr}\n\n"
+            . "*Alamat Pengiriman:*\n"
+            . "{$addressStr}\n\n"
+            . "*Catatan:* {$notes}\n\n"
+            . "_Pesan ini dikirim otomatis oleh sistem Fonnte._";
+
+        if (!empty($this->defaultTarget)) {
+            $this->sendMessage($this->defaultTarget, $adminMessage);
+        } else {
+            Log::warning("Fonnte: FONNTE_TARGET_PHONE is not set in .env");
+        }
+    }
+
+    /**
+     * Send notification to Admin when Customer uploads Payment Proof for standard order.
+     *
+     * @param Order $order
+     * @return void
+     */
+    public function sendOrderPaymentProofNotification(Order $order): void
+    {
+        $order->loadMissing(['paymentConfirmation']);
+
+        $payment = $order->paymentConfirmation;
+        $totalFormatted = number_format($order->total_amount, 0, ',', '.');
+        $amountPaidFormatted = $payment ? number_format($payment->amount, 0, ',', '.') : $totalFormatted;
+        $senderName = $payment ? $payment->sender_name : $order->shipping_name;
+        $senderBank = $payment ? $payment->sender_bank : '-';
+
+        $adminMessage = "💳 *BUKTI PEMBAYARAN BARU DIUNGBANG* 💳\n\n"
+            . "Pelanggan telah mengunggah bukti pembayaran untuk Pesanan *#{$order->order_code}*!\n\n"
+            . "• Nama Pemesan: *{$order->shipping_name}*\n"
+            . "• Nama Pengirim: *{$senderName}*\n"
+            . "• Bank / E-Wallet: *{$senderBank}*\n"
+            . "• Nominal: Rp {$amountPaidFormatted} (Total: Rp {$totalFormatted})\n\n"
+            . "Silakan periksa dan konfirmasi pembayaran di Dashboard Admin.\n"
+            . "_Pesan ini dikirim otomatis oleh sistem._";
+
+        if (!empty($this->defaultTarget)) {
+            $this->sendMessage($this->defaultTarget, $adminMessage);
+        }
+    }
+
+    /**
+     * Send Order status update notification to customer.
+     *
+     * @param Order $order
+     * @param string $statusTitle
+     * @param string|null $extraInfo
+     * @return void
+     */
+    public function sendOrderStatusNotification(Order $order, string $statusTitle, ?string $extraInfo = null): void
+    {
+        if (empty($order->shipping_phone)) {
+            return;
+        }
+
+        $totalFormatted = number_format($order->total_amount, 0, ',', '.');
+
+        $message = "📢 *UPDATE STATUS PESANAN #{$order->order_code}*\n\n"
+            . "Halo *{$order->shipping_name}*,\n"
+            . "Status Pesanan Anda saat ini: *{$statusTitle}*\n\n"
+            . "*Total Transaksi:* Rp {$totalFormatted}\n";
+
+        if ($extraInfo) {
+            $message .= "\n*Keterangan:* {$extraInfo}\n";
+        }
+
+        $message .= "\nTerima kasih telah berbelanja di UD Flamboyan!\n"
+            . "_Pesan ini dikirim otomatis oleh sistem._";
+
+        $this->sendMessage($order->shipping_phone, $message);
     }
 }

@@ -152,6 +152,23 @@
               Lihat &amp; Cetak Struk
             </button>
           </div>
+
+          <!-- Hubungi Admin via WhatsApp -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 class="font-semibold text-text mb-2 flex items-center gap-2">
+              <Icon icon="mdi:whatsapp" class="text-green-500 text-xl" />
+              Bantuan &amp; Layanan
+            </h2>
+            <p class="text-xs text-gray-500 mb-4">Butuh bantuan atau ingin menanyakan status pesanan ini?</p>
+            <a
+              :href="whatsappAdminUrl"
+              target="_blank"
+              class="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-green-500/20 cursor-pointer"
+            >
+              <Icon icon="mdi:whatsapp" class="text-lg" />
+              Chat Admin via WhatsApp
+            </a>
+          </div>
         </div>
 
         <!-- Right Side Panel -->
@@ -224,9 +241,14 @@
                 </div>
               </div>
 
-              <button type="button" @click="showPaymentModal = true" class="mt-4 w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all cursor-pointer">
-                <Icon icon="mdi:upload" /> Upload Bukti Pembayaran
-              </button>
+              <a
+                :href="whatsappPaymentConfirmUrl"
+                target="_blank"
+                class="mt-4 w-full py-3 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-green-500/20 transition-all cursor-pointer"
+              >
+                <Icon icon="mdi:whatsapp" class="text-xl" />
+                Konfirmasi Pembayaran via WhatsApp
+              </a>
             </div>
           </div>
           
@@ -269,58 +291,7 @@
       </div>
     </Transition>
 
-    <!-- MODAL UPLOAD BUKTI PEMBAYARAN -->
-    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="showPaymentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" @click.self="showPaymentModal = false">
-        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95" appear>
-          <div class="bg-white rounded-3xl p-6 max-w-md w-full relative shadow-2xl">
-            <button @click="showPaymentModal = false" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition cursor-pointer">
-              <Icon icon="mdi:close" class="text-xl" />
-            </button>
-            
-            <h3 class="text-lg font-bold text-text mb-1">Upload Bukti Pembayaran</h3>
-            <p class="text-xs text-gray-500 mb-4">Pesanan #{{ order.order_code }} • Total: <strong class="text-primary">Rp {{ fmt(order.total_amount) }}</strong></p>
 
-            <form @submit.prevent="submitPaymentProof" class="space-y-3.5 text-left">
-              <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Foto Bukti Transfer / Pembayaran *</label>
-                <input type="file" @change="paymentForm.proof_image = $event.target.files[0]" accept="image/*" required class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
-                <p v-if="paymentForm.errors.proof_image" class="text-xs text-danger mt-1">{{ paymentForm.errors.proof_image }}</p>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Pengirim (Opsional)</label>
-                <input v-model="paymentForm.sender_name" type="text" placeholder="Nama Pengirim" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary focus:bg-white transition">
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Bank / E-Wallet Pengirim (Opsional)</label>
-                <input v-model="paymentForm.sender_bank" type="text" placeholder="Contoh: BRI / GoPay / OVO" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary focus:bg-white transition">
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Jumlah Transfer</label>
-                <div class="relative rounded-xl">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <span class="text-sm font-semibold text-gray-500">Rp</span>
-                  </div>
-                  <input v-model.number="paymentForm.amount" type="number" class="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary focus:bg-white transition">
-                </div>
-              </div>
-
-              <div class="flex gap-2 pt-2">
-                <button type="button" @click="showPaymentModal = false" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold text-xs rounded-xl hover:bg-gray-50 transition cursor-pointer">
-                  Batal
-                </button>
-                <button type="submit" :disabled="paymentForm.processing" class="flex-1 py-2.5 bg-primary text-white font-semibold text-xs rounded-xl hover:bg-primary-dark transition shadow-md shadow-primary/20 cursor-pointer disabled:opacity-50">
-                  {{ paymentForm.processing ? 'Mengunggah...' : 'Kirim Bukti Pembayaran' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
 
     <!-- Modal Struk Pemesanan -->
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
@@ -401,36 +372,59 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ order: Object });
+const page = usePage();
 
 const reviewForms = ref({});
 const showQrisModal = ref(false);
-const showPaymentModal = ref(false);
 const showReceiptModal = ref(false);
 const countdownText = ref('24:00:00');
 let timerInterval = null;
 
-const paymentForm = useForm({
-  proof_image: null,
-  sender_name: '',
-  sender_bank: '',
-  amount: props.order.total_amount,
+const storePhone = computed(() => {
+  let phone = page.props.fonntePhone || '6281356578805';
+  phone = phone.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.slice(1);
+  }
+  return phone;
 });
 
-function submitPaymentProof() {
-  paymentForm.post(`/pesanan/${props.order.id}/bayar`, {
-    forceFormData: true,
-    onSuccess: () => {
-      showPaymentModal.value = false;
-      paymentForm.reset();
-    },
-  });
-}
+const whatsappAdminUrl = computed(() => {
+  const text = encodeURIComponent(`Halo Admin UD Flamboyan, saya ingin menanyakan tentang pesanan saya #${props.order.order_code}. Terima kasih!`);
+  return `https://wa.me/${storePhone.value}?text=${text}`;
+});
+
+const whatsappPaymentConfirmUrl = computed(() => {
+  const itemsText = props.order.items.map((item, index) => {
+    return `${index + 1}. ${item.product_name} (${item.qty} x Rp ${fmt(item.price)} = Rp ${fmt(item.subtotal)})`;
+  }).join('\n');
+
+  const courierText = `${props.order.courier} ${props.order.courier_service}`;
+  const paymentMethodText = props.order.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank Manual';
+
+  const rawText = `Halo Admin UD Flamboyan, saya ingin mengonfirmasi pembayaran untuk pesanan saya:
+
+*Detail Pesanan:*
+• Kode Pesanan: #${props.order.order_code}
+• Pemesan: ${props.order.shipping_name}
+• Metode Bayar: ${paymentMethodText}
+
+*Rincian Produk:*
+${itemsText}
+
+*Ongkos Kirim (${courierText}):* Rp ${fmt(props.order.shipping_cost || 0)}
+*Total Pembayaran:* Rp ${fmt(props.order.total_amount)}
+
+Mohon untuk memproses pesanan saya. Terima kasih!`;
+
+  return `https://wa.me/${storePhone.value}?text=${encodeURIComponent(rawText)}`;
+});
 
 onMounted(() => {
   props.order.items.forEach(item => {

@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PaymentConfirmation;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index(Request $request)
     {
         if (auth()->check() && auth()->user()->role !== 'user') {
@@ -213,6 +221,9 @@ class OrderController extends Controller
         }
 
         $order->update(['status' => 'menunggu_verifikasi']);
+
+        // Send WA notification to admin about new payment proof
+        $this->fonnteService->sendOrderPaymentProofNotification($order);
 
         return redirect()->route('orders.show', $order)->with('success', 'Bukti pembayaran berhasil diupload!');
     }

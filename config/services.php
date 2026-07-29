@@ -42,7 +42,9 @@ return [
     ],
 
     'fonnte' => [
+        'enabled' => env('FONNTE_ENABLED', true),
         'token' => env('FONNTE_TOKEN'),
+        'phone' => env('FONNTE_PHONE'),
         'target_phone' => env('FONNTE_TARGET_PHONE'),
     ],
 

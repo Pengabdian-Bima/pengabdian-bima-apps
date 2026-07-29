@@ -169,12 +169,11 @@
               Ekspedisi: <strong>{{ preOrder.courier }} - {{ preOrder.courier_service }}</strong><br/>
               Metode Bayar: <strong class="uppercase">{{ preOrder.payment_method }}</strong>
             </p>
-            <p class="text-xs text-orange-600" v-if="!preOrder.payment_proof_url">Menunggu pelanggan mengupload bukti pembayaran.</p>
-            <p class="text-xs text-orange-600" v-else>Pelanggan telah mengupload bukti pembayaran. Harap verifikasi lalu tandai selesai.</p>
+            <p class="text-xs text-orange-600">Konfirmasi bukti pembayaran dikirim langsung oleh pembeli via WhatsApp. Harap verifikasi lalu tandai PO selesai.</p>
           </div>
 
-          <!-- Complete button (only accessible when proof is uploaded) -->
-          <div v-if="preOrder.payment_proof_url" class="bg-white rounded-2xl border border-gray-100 p-5">
+          <!-- Complete button -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-5">
             <button @click="showCompleteModal = true" :disabled="completeLoading"
               class="w-full py-3 bg-success text-white font-semibold text-sm rounded-xl hover:bg-green-600 transition shadow-md shadow-green-100 flex items-center justify-center gap-2 cursor-pointer">
               <Icon v-if="completeLoading" icon="mdi:loading" class="animate-spin" />

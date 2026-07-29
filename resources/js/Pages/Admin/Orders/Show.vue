@@ -57,6 +57,16 @@
               <span class="font-bold text-text bg-gray-100 px-2 py-0.5 rounded">{{ order.courier }} - {{ order.courier_service }}</span>
             </div>
             <p v-if="order.notes" class="mt-2 italic text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">Catatan: {{ order.notes }}</p>
+            <div v-if="order.shipping_phone" class="mt-4 pt-3 border-t border-gray-100">
+              <a
+                :href="whatsappCustomerUrl"
+                target="_blank"
+                class="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
+              >
+                <Icon icon="mdi:whatsapp" class="text-base" />
+                Chat Pembeli via WhatsApp ({{ order.shipping_phone }})
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -86,18 +96,21 @@
               <img v-if="order.payment.proof_image_url" :src="order.payment.proof_image_url" class="w-full rounded-xl border border-gray-100" alt="Bukti">
             </div>
           </div>
-          <p v-else class="text-sm text-gray-500">Belum ada unggahan bukti pembayaran</p>
+          <p class="text-xs text-gray-500 bg-gray-50 p-3 rounded-xl">
+            <Icon icon="mdi:information-outline" class="inline mr-1 text-primary" />
+            Konfirmasi bukti pembayaran dikirim langsung oleh pembeli via WhatsApp.
+          </p>
         </div>
 
         <!-- Update Status -->
         <div v-if="isAdmin" class="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 class="font-semibold text-text mb-4">Ubah Status</h2>
           <div class="space-y-2">
-            <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('diproses')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Verifikasi & Proses</button>
-            <button v-if="order.status === 'menunggu_verifikasi'" @click="openRejectionModal" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition">✗ Tolak Pembayaran</button>
-            <button v-if="order.status === 'diproses'" @click="updateStatus('dikirim')" class="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition">📦 Tandai Dikirim</button>
-            <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Tandai Selesai</button>
-            <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition">Batalkan</button>
+            <button v-if="['menunggu_pembayaran', 'menunggu_verifikasi'].includes(order.status)" @click="updateStatus('diproses')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition cursor-pointer">✓ Verifikasi &amp; Proses</button>
+            <button v-if="['menunggu_pembayaran', 'menunggu_verifikasi'].includes(order.status)" @click="openRejectionModal" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition cursor-pointer">✗ Tolak Pembayaran</button>
+            <button v-if="order.status === 'diproses'" @click="updateStatus('dikirim')" class="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition cursor-pointer">📦 Tandai Dikirim</button>
+            <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition cursor-pointer">✓ Tandai Selesai</button>
+            <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition cursor-pointer">Batalkan</button>
           </div>
         </div>
 
@@ -245,6 +258,16 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 const showRejectionModal = ref(false);
 const showReceiptModal = ref(false);
 const rejectionReason = ref('');
+
+const whatsappCustomerUrl = computed(() => {
+  let phone = props.order.shipping_phone || '';
+  phone = phone.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.slice(1);
+  }
+  const text = encodeURIComponent(`Halo ${props.order.shipping_name}, kami dari Admin UD Flamboyan mengenai pesanan Anda #${props.order.order_code}.`);
+  return `https://wa.me/${phone}?text=${text}`;
+});
 
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
 function sc(c) { return { warning:'bg-yellow-100 text-yellow-700',info:'bg-blue-100 text-blue-700',primary:'bg-orange-100 text-orange-700',success:'bg-green-100 text-green-700',danger:'bg-red-100 text-red-700' }[c]||'bg-gray-100 text-gray-700'; }

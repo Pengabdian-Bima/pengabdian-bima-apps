@@ -66,86 +66,36 @@
           </div>
         </div>
 
-        <!-- Already uploaded -->
-        <div v-if="preOrder.payment_proof_url" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
-          <h2 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2 text-sm">
-            <Icon icon="mdi:receipt-check-outline" class="text-success text-lg" /> Bukti Pembayaran Terkirim
+        <!-- Payment Confirmation Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
+            <Icon icon="mdi:credit-card-outline" class="text-primary text-lg" />
+            Informasi &amp; Konfirmasi Pembayaran
           </h2>
-          <div class="flex gap-4 items-start">
-            <img :src="preOrder.payment_proof_url" alt="Bukti Bayar" class="w-28 h-28 object-cover rounded-xl border border-gray-100 dark:border-gray-700 cursor-pointer" @click="previewImage = preOrder.payment_proof_url" />
-            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p><span class="font-medium text-gray-800 dark:text-white">Pengirim:</span> {{ preOrder.payment_sender_name }}</p>
-              <p><span class="font-medium text-gray-800 dark:text-white">Bank/E-wallet:</span> {{ preOrder.payment_sender_bank }}</p>
-              <p><span class="font-medium text-gray-800 dark:text-white">Jumlah:</span> Rp {{ fmt(preOrder.payment_amount) }}</p>
-              <p><span class="font-medium text-gray-800 dark:text-white">Tanggal:</span> {{ preOrder.payment_date }}</p>
+          
+          <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 text-xs space-y-2">
+            <p class="text-gray-600 dark:text-gray-300">Silakan lakukan pembayaran sebesar <strong class="text-primary">Rp {{ fmt(preOrder.total_amount) }}</strong> ke:</p>
+            <div v-if="preOrder.payment_method === 'transfer'" class="font-mono text-gray-800 dark:text-gray-200 space-y-1">
+              <p>• Bank BRI: <span class="font-bold select-all">1234-5678-9012-3456</span> a.n. UD Flamboyan</p>
             </div>
-          </div>
-          <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
-            <Icon icon="mdi:information-outline" />
-            Admin sedang memverifikasi pembayaran Anda. Tunggu konfirmasi selanjutnya.
-          </p>
-          <button @click="showPaymentForm = true" class="mt-3 text-xs text-primary underline cursor-pointer">Upload ulang jika ada kesalahan</button>
-        </div>
-
-        <!-- Upload form (shown if no proof yet or user clicks upload ulang) -->
-        <div v-if="!preOrder.payment_proof_url || showPaymentForm" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
-          <h2 class="font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2 text-sm">
-            <Icon icon="mdi:upload-outline" class="text-primary text-lg" />
-            Upload Bukti Pembayaran
-          </h2>
-          <p class="text-xs text-gray-500 mb-4">
-            Transfer ke:
-            <span v-if="preOrder.payment_method === 'transfer'" class="font-semibold text-gray-700 dark:text-gray-300"> BRI · 1234-5678-9012-3456 a.n. UD Flamboyan</span>
-            <span v-else class="font-semibold text-gray-700 dark:text-gray-300"> Scan QRIS di bawah ini</span>
-          </p>
-
-          <!-- QRIS display -->
-          <div v-if="preOrder.payment_method === 'qris'" class="flex justify-center mb-4">
-            <div class="bg-white border-2 border-gray-200 rounded-2xl p-4 inline-block">
-              <img src="/img/qris.png" alt="QRIS" class="w-44 h-44 object-contain" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-              <div class="hidden w-44 h-44 items-center justify-center text-xs text-gray-400 text-center flex-col gap-2">
-                <Icon icon="mdi:qrcode" class="text-5xl text-gray-300" />
-                <span>Scan QRIS Toko</span>
-              </div>
+            <div v-else class="text-center py-2">
+              <img src="/img/qris-barcode.png" alt="QRIS" class="w-44 h-44 object-contain mx-auto border border-gray-200 rounded-xl bg-white p-2 mb-1" />
+              <p class="text-[10px] text-gray-400">Scan QRIS toko untuk pembayaran</p>
             </div>
           </div>
 
-          <form @submit.prevent="submitPayment" class="space-y-3">
-            <div>
-              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1">Nama Pengirim</label>
-              <input v-model="payForm.sender_name" type="text" placeholder="Nama sesuai rekening / akun" class="w-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition" />
-            </div>
-            <div>
-              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1">Bank / E-wallet</label>
-              <input v-model="payForm.sender_bank" type="text" placeholder="contoh: BRI, GoPay, OVO, QRIS" class="w-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition" />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1">Jumlah Transfer (Rp)</label>
-                <input v-model="payForm.amount" type="number" :placeholder="preOrder.total_amount" class="w-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition" />
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1">Tanggal Transfer</label>
-                <input v-model="payForm.pay_date" type="date" class="w-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition" />
-              </div>
-            </div>
-            <div>
-              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1">Foto Bukti Transfer <span class="text-danger">*</span></label>
-              <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-primary transition bg-gray-50 dark:bg-gray-700/50">
-                <div v-if="!payForm.previewUrl" class="text-center">
-                  <Icon icon="mdi:cloud-upload-outline" class="text-3xl text-gray-300 mb-1 mx-auto" />
-                  <p class="text-xs text-gray-400">Klik untuk upload (JPG/PNG, maks 5MB)</p>
-                </div>
-                <img v-else :src="payForm.previewUrl" alt="Preview" class="h-full object-contain rounded-xl" />
-                <input type="file" class="hidden" accept="image/*" @change="handleFileChange" />
-              </label>
-            </div>
-            <button type="submit" :disabled="!payForm.proof_image || payLoading"
-              class="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
-              <Icon icon="mdi:send-outline" />
-              {{ payLoading ? 'Mengirim...' : 'Kirim Bukti Pembayaran' }}
-            </button>
-          </form>
+          <p class="text-xs text-gray-500">
+            Setelah melakukan pembayaran, silakan kirimkan bukti transfer Anda langsung ke WhatsApp Admin UD Flamboyan dengan menekan tombol di bawah ini:
+          </p>
+
+          <a
+            :href="whatsappPaymentConfirmUrl"
+            target="_blank"
+            class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md shadow-green-500/20 transition-all cursor-pointer"
+          >
+            <Icon icon="mdi:whatsapp" class="text-xl" />
+            Konfirmasi Pembayaran via WhatsApp
+          </a>
         </div>
       </div>
 
@@ -351,25 +301,24 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ preOrder: Object });
+const page = usePage();
 const confirmCancel = ref(false);
-const showPaymentForm = ref(false);
 const showReceiptModal = ref(false);
 const previewImage = ref(null);
-const payLoading = ref(false);
 
-const payForm = reactive({
-  sender_name: '',
-  sender_bank: '',
-  amount: '',
-  pay_date: new Date().toISOString().split('T')[0],
-  proof_image: null,
-  previewUrl: null,
+const storePhone = computed(() => {
+  let phone = page.props.fonntePhone || '6281356578805';
+  phone = phone.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.slice(1);
+  }
+  return phone;
 });
 
 const totalWeight = computed(() => {
@@ -388,31 +337,33 @@ function sc(c) {
   }[c] || 'bg-gray-100 text-gray-600';
 }
 
-function handleFileChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  payForm.proof_image = file;
-  payForm.previewUrl = URL.createObjectURL(file);
-}
+const whatsappPaymentConfirmUrl = computed(() => {
+  const itemsText = props.preOrder.items.map((item, index) => {
+    return `${index + 1}. ${item.product_name} (${item.qty} x Rp ${fmt(item.price)} = Rp ${fmt(item.subtotal)})`;
+  }).join('\n');
 
-function submitPayment() {
-  if (!payForm.proof_image) return;
-  payLoading.value = true;
-  const fd = new FormData();
-  fd.append('proof_image', payForm.proof_image);
-  if (payForm.sender_name) fd.append('sender_name', payForm.sender_name);
-  if (payForm.sender_bank) fd.append('sender_bank', payForm.sender_bank);
-  if (payForm.amount) fd.append('amount', payForm.amount);
-  if (payForm.pay_date) fd.append('pay_date', payForm.pay_date);
+  const courierText = props.preOrder.courier ? `${props.preOrder.courier} ${props.preOrder.courier_service}` : '-';
+  const paymentMethodText = props.preOrder.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank Manual';
+  const estDays = props.preOrder.estimated_days ? `${props.preOrder.estimated_days} Hari` : '-';
 
-  router.post(`/pre-order/${props.preOrder.id}/bayar`, fd, {
-    onSuccess: () => {
-      payLoading.value = false;
-      showPaymentForm.value = false;
-    },
-    onError: () => { payLoading.value = false; },
-  });
-}
+  const rawText = `Halo Admin UD Flamboyan, saya ingin mengonfirmasi pembayaran untuk Pre-Order saya:
+
+*Detail Pre-Order:*
+• Kode PO: #${props.preOrder.po_code}
+• Pemesan: ${props.preOrder.shipping_name}
+• Estimasi Pengerjaan: ${estDays}
+• Metode Bayar: ${paymentMethodText}
+
+*Rincian Produk:*
+${itemsText}
+
+*Ongkos Kirim (${courierText}):* Rp ${fmt(props.preOrder.shipping_cost || 0)}
+*Total Pembayaran:* Rp ${fmt(props.preOrder.total_amount)}
+
+Mohon untuk memproses Pre-Order saya. Terima kasih!`;
+
+  return `https://wa.me/${storePhone.value}?text=${encodeURIComponent(rawText)}`;
+});
 
 function cancelPO() {
   router.post(`/pre-order/${props.preOrder.id}/batal`, {}, {
