@@ -257,12 +257,21 @@
             <h2 class="text-lg font-semibold text-text mb-4">Ringkasan Pesanan</h2>
             <div class="space-y-3">
               <div v-for="item in items" :key="item.id" class="flex justify-between text-sm">
-                <span class="text-gray-600 max-w-[180px] truncate">{{ item.product_name }} x{{ item.qty }}</span>
+                <div>
+                  <span class="text-gray-600 max-w-[180px] truncate block">{{ item.product_name }} x{{ item.qty }}</span>
+                  <span v-if="item.is_discount_active" class="text-[10px] text-danger font-bold">Diskon {{ item.discount_percent }}% (Rp {{ formatPrice(item.price) }}/unit)</span>
+                </div>
                 <span class="font-medium text-text">Rp {{ formatPrice(item.subtotal) }}</span>
               </div>
             </div>
             
             <hr class="my-4 border-gray-100">
+
+            <div v-if="checkoutTotalSavings > 0" class="mb-3 p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center justify-between">
+              <span class="flex items-center gap-1 font-medium"><Icon icon="mdi:ticket-percent" class="text-emerald-600 text-sm" /> Hemat Promo Diskon:</span>
+              <span class="font-bold text-emerald-700">Rp {{ formatPrice(checkoutTotalSavings) }}</span>
+            </div>
+
             <div class="flex justify-between text-sm text-gray-600">
               <span>Subtotal Produk</span>
               <span class="font-medium text-text">Rp {{ formatPrice(total) }}</span>
@@ -639,6 +648,16 @@ const loadingShipping = ref(false);
 
 const totalWeight = computed(() => {
   return props.items.reduce((sum, item) => sum + ((item.weight || 200) * item.qty), 0);
+});
+
+const checkoutTotalSavings = computed(() => {
+  if (!props.items) return 0;
+  return props.items.reduce((acc, item) => {
+    if (item.is_discount_active && item.original_price > item.price) {
+      return acc + ((item.original_price - item.price) * item.qty);
+    }
+    return acc;
+  }, 0);
 });
 
 async function calculateShippingCost() {

@@ -26,14 +26,20 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang belanja kosong.');
         }
 
-        $items = $cart->items->map(fn ($item) => [
-            'id' => $item->id,
-            'product_name' => $item->product->name,
-            'price' => $item->price,
-            'qty' => $item->qty,
-            'weight' => $item->product->weight > 0 ? $item->product->weight : 200,
-            'subtotal' => $item->subtotal,
-        ]);
+        $items = $cart->items->map(function ($item) {
+            $effectivePrice = $item->product->final_price;
+            return [
+                'id' => $item->id,
+                'product_name' => $item->product->name,
+                'original_price' => $item->product->price,
+                'price' => $effectivePrice,
+                'is_discount_active' => $item->product->is_discount_active,
+                'discount_percent' => $item->product->discount_percent,
+                'qty' => $item->qty,
+                'weight' => $item->product->weight > 0 ? $item->product->weight : 200,
+                'subtotal' => $effectivePrice * $item->qty,
+            ];
+        });
 
         $total = $items->sum('subtotal');
 
@@ -146,7 +152,7 @@ class CheckoutController extends Controller
         }
 
         DB::transaction(function () use ($request, $cart, $shippingData, $calculatedCost) {
-            $subtotal = $cart->items->sum(fn ($item) => $item->qty * $item->price);
+            $subtotal = $cart->items->sum(fn ($item) => $item->qty * $item->product->final_price);
             $total = $subtotal + $calculatedCost;
 
             $order = Order::create(array_merge([
@@ -162,12 +168,13 @@ class CheckoutController extends Controller
             ], $shippingData));
 
             foreach ($cart->items as $item) {
+                $effectivePrice = $item->product->final_price;
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'qty' => $item->qty,
-                    'price' => $item->price,
-                    'subtotal' => $item->qty * $item->price,
+                    'price' => $effectivePrice,
+                    'subtotal' => $item->qty * $effectivePrice,
                 ]);
 
                 // Reduce stock

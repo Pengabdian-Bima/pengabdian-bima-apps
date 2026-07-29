@@ -13,13 +13,18 @@ class HomeController extends Controller
         $products = Product::with('category')
             ->where('status', true)
             ->latest()
-            ->take(6)
+            ->take(8)
             ->get()
             ->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'slug' => $p->slug,
                 'price' => $p->price,
+                'final_price' => $p->final_price,
+                'is_discount_active' => $p->is_discount_active,
+                'discount_percent' => $p->discount_percent,
+                'discount_end_at_formatted' => $p->discount_end_at_formatted,
+                'discount_remaining_seconds' => $p->discount_remaining_seconds,
                 'stock' => $p->stock,
                 'thumbnail_url' => $p->thumbnail_url,
                 'category' => $p->category?->name,

@@ -12,8 +12,14 @@
               <Icon v-else icon="mdi:food-croissant" class="text-3xl text-primary/30" />
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-text truncate">{{ item.product_name }}</h3>
-              <p class="text-primary font-bold">Rp {{ formatPrice(item.price) }}</p>
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold text-text truncate">{{ item.product_name }}</h3>
+                <span v-if="item.is_discount_active" class="px-1.5 py-0.5 bg-danger text-white text-[10px] font-black rounded-md">-{{ item.discount_percent }}%</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <p class="text-primary font-bold">Rp {{ formatPrice(item.price) }}</p>
+                <p v-if="item.is_discount_active" class="text-xs text-gray-400 line-through">Rp {{ formatPrice(item.original_price) }}</p>
+              </div>
             </div>
             <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
               <button @click="updateQty(item, item.qty - 1)" :disabled="item.qty <= 1" class="px-3 py-1.5 hover:bg-gray-50 disabled:opacity-30"><Icon icon="mdi:minus" /></button>
@@ -28,6 +34,11 @@
         </div>
 
         <div class="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+          <div v-if="totalSavings > 0" class="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center justify-between">
+            <span class="flex items-center gap-1.5 font-medium"><Icon icon="mdi:ticket-percent" class="text-base text-emerald-600" /> Total Hemat dari Promo Diskon:</span>
+            <span class="font-bold text-emerald-700 text-sm">Rp {{ formatPrice(totalSavings) }}</span>
+          </div>
+
           <div class="flex items-center justify-between text-xl font-bold">
             <span class="text-text">Total</span>
             <span class="text-primary">Rp {{ formatPrice(total) }}</span>
@@ -50,11 +61,22 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
-defineProps({ items: Array, total: Number });
+const props = defineProps({ items: Array, total: Number });
+
+const totalSavings = computed(() => {
+  if (!props.items) return 0;
+  return props.items.reduce((acc, item) => {
+    if (item.is_discount_active && item.original_price > item.price) {
+      return acc + ((item.original_price - item.price) * item.qty);
+    }
+    return acc;
+  }, 0);
+});
 
 function formatPrice(p) { return Number(p).toLocaleString('id-ID'); }
 

@@ -29,13 +29,25 @@
               <div class="absolute top-2 left-2 sm:top-3 sm:left-3">
                 <span class="px-2 py-0.5 sm:px-3 sm:py-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-primary">{{ product.category }}</span>
               </div>
+              <div v-if="product.is_discount_active" class="absolute top-2 right-2 sm:top-3 sm:right-3 bg-danger text-white text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg shadow-md">
+                -{{ product.discount_percent }}%
+              </div>
             </div>
           </Link>
           <div class="p-3 sm:p-4 flex flex-col flex-1">
             <h3 class="font-semibold text-xs sm:text-base text-text dark:text-white mt-1 group-hover:text-primary transition-colors line-clamp-2 leading-snug">{{ product.name }}</h3>
             <p class="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{{ product.weight }}g</p>
             <div class="mt-auto pt-2 sm:pt-3">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+              <div v-if="product.is_discount_active">
+                <span class="text-[10px] sm:text-xs text-gray-400 line-through">Rp {{ formatPrice(product.price) }}</span>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                  <p class="text-sm sm:text-lg font-extrabold text-primary">Rp {{ formatPrice(product.final_price) }}</p>
+                  <span :class="['text-[9px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium w-fit', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
+                    {{ product.stock > 0 ? `Stok: ${product.stock}` : 'Habis' }}
+                  </span>
+                </div>
+              </div>
+              <div v-else class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
                 <p class="text-sm sm:text-lg font-bold text-primary">Rp {{ formatPrice(product.price) }}</p>
                 <span :class="['text-[9px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium w-fit', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
                   {{ product.stock > 0 ? `Stok: ${product.stock}` : 'Habis' }}

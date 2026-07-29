@@ -52,11 +52,35 @@
           <span class="inline-block px-3 py-1 bg-primary/10 rounded-full text-sm font-medium text-primary">{{ product.category }}</span>
           <h1 class="text-3xl font-bold text-text dark:text-white mt-3">{{ product.name }}</h1>
 
-          <div class="flex items-center gap-4 mt-4">
-            <p class="text-3xl font-extrabold text-primary">Rp {{ formatPrice(product.price) }}</p>
-            <span :class="['text-sm px-3 py-1 rounded-full font-medium', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
+          <div class="flex flex-wrap items-baseline gap-3 mt-4">
+            <div v-if="product.is_discount_active" class="flex items-baseline gap-3">
+              <p class="text-3xl font-extrabold text-primary">Rp {{ formatPrice(product.final_price) }}</p>
+              <p class="text-lg text-gray-400 line-through font-medium">Rp {{ formatPrice(product.price) }}</p>
+              <span class="px-2.5 py-1 bg-danger text-white font-extrabold text-xs rounded-lg shadow-sm shadow-danger/30">
+                DISKON {{ product.discount_percent }}%
+              </span>
+            </div>
+            <p v-else class="text-3xl font-extrabold text-primary">Rp {{ formatPrice(product.price) }}</p>
+
+            <span :class="['text-sm px-3 py-1 rounded-full font-medium ml-auto sm:ml-0', product.stock > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger']">
               {{ product.stock > 0 ? `Stok: ${product.stock}` : 'Habis' }}
             </span>
+          </div>
+
+          <!-- DISCOUNT INFO (INFORMASI DISKON UMKM SUASANA NATURAL) -->
+          <div v-if="product.is_discount_active" class="mt-4 p-3.5 bg-primary/10 border border-primary/20 rounded-xl text-text dark:text-gray-200 flex items-center gap-3">
+            <Icon icon="mdi:clock-outline" class="text-primary text-xl shrink-0" />
+            <div>
+              <p v-if="isEndsToday" class="font-medium text-xs sm:text-sm">
+                Diskon <span class="font-bold text-primary">{{ product.discount_percent }}%</span> akan berakhir dalam <strong>{{ formattedCountdownText }}</strong>
+              </p>
+              <p v-else-if="isFutureDate" class="font-medium text-xs sm:text-sm">
+                Diskon <span class="font-bold text-primary">{{ product.discount_percent }}%</span> berlaku sampai tanggal <strong>{{ product.discount_end_at_formatted }}</strong>
+              </p>
+              <p v-else class="font-medium text-xs sm:text-sm">
+                Diskon <span class="font-bold text-primary">{{ product.discount_percent }}%</span> berlaku untuk produk ini!
+              </p>
+            </div>
           </div>
 
           <div class="flex items-center gap-6 mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -187,6 +211,35 @@ const isNonCustomer = computed(() => {
   return page.props.auth.user && page.props.auth.user.role !== 'user';
 });
 
+// Live Discount Countdown Timer Logic
+const remainingSeconds = ref(props.product.discount_remaining_seconds || 0);
+let timerInterval = null;
+
+const formattedCountdownText = computed(() => {
+  if (remainingSeconds.value <= 0) return '0 jam 0 menit 0 detik';
+  const hours = Math.floor(remainingSeconds.value / 3600);
+  const minutes = Math.floor((remainingSeconds.value % 3600) / 60);
+  const seconds = remainingSeconds.value % 60;
+  
+  if (hours > 0) {
+    return `${hours} jam ${minutes} menit ${seconds} detik`;
+  }
+  if (minutes > 0) {
+    return `${minutes} menit ${seconds} detik`;
+  }
+  return `${seconds} detik`;
+});
+
+// Ending today if remaining time < 24 hours (86400 seconds)
+const isEndsToday = computed(() => {
+  return props.product.is_discount_active && remainingSeconds.value > 0 && remainingSeconds.value < 86400;
+});
+
+// Remaining > 24 hours
+const isFutureDate = computed(() => {
+  return props.product.is_discount_active && remainingSeconds.value >= 86400;
+});
+
 const currentMainImage = ref(props.product.thumbnail_url || null);
 
 // Lightbox state
@@ -248,10 +301,20 @@ function handleKeyDown(e) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  if (props.product.is_discount_active && remainingSeconds.value > 0) {
+    timerInterval = setInterval(() => {
+      if (remainingSeconds.value > 0) {
+        remainingSeconds.value--;
+      } else {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  if (timerInterval) clearInterval(timerInterval);
 });
 
 function formatPrice(price) { return Number(price).toLocaleString('id-ID'); }

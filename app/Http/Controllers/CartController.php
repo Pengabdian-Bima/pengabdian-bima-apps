@@ -20,17 +20,23 @@ class CartController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
-        $items = $cart ? $cart->items->map(fn ($item) => [
-            'id' => $item->id,
-            'product_id' => $item->product_id,
-            'product_name' => $item->product->name,
-            'product_slug' => $item->product->slug,
-            'thumbnail_url' => $item->product->thumbnail_url,
-            'price' => $item->price,
-            'qty' => $item->qty,
-            'subtotal' => $item->subtotal,
-            'stock' => $item->product->stock,
-        ]) : collect();
+        $items = $cart ? $cart->items->map(function ($item) {
+            $effectivePrice = $item->product->final_price;
+            return [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product->name,
+                'product_slug' => $item->product->slug,
+                'thumbnail_url' => $item->product->thumbnail_url,
+                'original_price' => $item->product->price,
+                'price' => $effectivePrice,
+                'is_discount_active' => $item->product->is_discount_active,
+                'discount_percent' => $item->product->discount_percent,
+                'qty' => $item->qty,
+                'subtotal' => $effectivePrice * $item->qty,
+                'stock' => $item->product->stock,
+            ];
+        }) : collect();
 
         $total = $items->sum('subtotal');
 
@@ -68,13 +74,16 @@ class CartController extends Controller
             if ($newQty > $product->stock) {
                 return back()->with('error', 'Jumlah melebihi stok tersedia.');
             }
-            $cartItem->update(['qty' => $newQty]);
+            $cartItem->update([
+                'qty' => $newQty,
+                'price' => $product->final_price,
+            ]);
         } else {
             CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $product->id,
                 'qty' => $request->qty,
-                'price' => $product->price,
+                'price' => $product->final_price,
             ]);
         }
 

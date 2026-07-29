@@ -26,7 +26,7 @@
           <!-- Live Countdown Timer -->
           <div class="bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-center border border-white/20 w-full sm:w-auto">
             <span class="text-[10px] text-white/80 uppercase tracking-wider block font-semibold">Sisa Waktu Pembayaran:</span>
-            <span class="text-xl font-black text-white font-mono tracking-wider">{{ countdownText }}</span>
+            <span class="text-xl font-bold text-white tracking-wider">{{ countdownText }}</span>
           </div>
         </div>
       </div>
