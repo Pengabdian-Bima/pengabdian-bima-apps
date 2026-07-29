@@ -34,6 +34,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Create Kasir
+        User::firstOrCreate(
+            ['email' => 'kasir@flamboyan.com'],
+            [
+                'name' => 'Kasir UD Flamboyan',
+                'phone' => '081234567891',
+                'password' => Hash::make('Password123'),
+                'role' => 'kasir',
+            ]
+        );
+
         // Create Categories
         $categories = [
             ['name' => 'Biskuit Original', 'slug' => 'biskuit-original', 'description' => 'Biskuit Ikan Huluu rasa original khas Danau Limboto'],

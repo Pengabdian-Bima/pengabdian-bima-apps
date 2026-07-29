@@ -90,7 +90,7 @@
         </div>
 
         <!-- Update Status -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-6">
+        <div v-if="isAdmin" class="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 class="font-semibold text-text mb-4">Ubah Status</h2>
           <div class="space-y-2">
             <button v-if="order.status === 'menunggu_verifikasi'" @click="updateStatus('diproses')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Verifikasi & Proses</button>
@@ -99,6 +99,19 @@
             <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition">✓ Tandai Selesai</button>
             <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition">Batalkan</button>
           </div>
+        </div>
+
+        <!-- Lihat Struk (Kasir Offline) -->
+        <div v-if="order.payment_method === 'tunai'" class="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 class="font-semibold text-text mb-3 flex items-center gap-2">
+            <Icon icon="mdi:receipt-text-outline" class="text-primary text-xl" />
+            Struk Kasir
+          </h2>
+          <p class="text-xs text-gray-500 mb-4">Pesanan ini merupakan transaksi tunai offline. Anda dapat melihat atau mencetak ulang struk kasir.</p>
+          <button @click="showReceiptModal = true" class="w-full py-2.5 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-pointer">
+            <Icon icon="mdi:printer-eye" class="text-lg" />
+            Lihat & Cetak Struk
+          </button>
         </div>
       </div>
     </div>
@@ -138,17 +151,99 @@
         </Transition>
       </div>
     </Transition>
+
+    <!-- Modal Struk Kasir -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showReceiptModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showReceiptModal = false">
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95" appear>
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 class="font-bold text-text flex items-center gap-2">
+                <Icon icon="mdi:receipt-text-outline" class="text-primary" /> Struk Pemesanan
+              </h3>
+              <button @click="showReceiptModal = false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition cursor-pointer">
+                <Icon icon="mdi:close" class="text-xl" />
+              </button>
+            </div>
+
+            <!-- Receipt Content -->
+            <div class="p-5 max-h-[70vh] overflow-y-auto">
+              <div id="order-receipt-print-area" class="bg-gray-50 border border-gray-200 rounded-2xl p-5 font-mono text-xs text-gray-800 space-y-4">
+                <div class="text-center">
+                  <div class="flex justify-center mb-2">
+                    <img src="/img/logo-brand.jpeg" alt="Logo Brand" class="h-12 w-auto object-contain rounded-md mx-auto" />
+                  </div>
+                  <h4 class="font-bold text-sm uppercase">UD FLAMBOYAN</h4>
+                  <p class="text-[10px] text-gray-500 mt-0.5">Biskuit Ikan Huluu Danau Limboto</p>
+                  <p class="text-[9px] text-gray-400 mt-1">Gorontalo, Indonesia</p>
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 my-2"></div>
+
+                <div class="space-y-1 text-[10px]">
+                  <div class="flex justify-between"><span>No Struk:</span><span class="font-bold">{{ order.order_code }}</span></div>
+                  <div class="flex justify-between"><span>Tanggal:</span><span>{{ order.created_at }}</span></div>
+                  <div class="flex justify-between"><span>Pelanggan:</span><span>{{ order.shipping_name }}</span></div>
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 my-2"></div>
+
+                <table class="w-full text-[10px]">
+                  <tbody>
+                    <tr v-for="(item, idx) in order.items" :key="idx">
+                      <td class="py-1">
+                        <div>{{ item.product_name }}</div>
+                        <div class="text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</div>
+                      </td>
+                      <td class="text-right py-1 font-semibold align-bottom">Rp {{ fmt(item.subtotal) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="border-t border-dashed border-gray-300 my-2"></div>
+
+                <div class="space-y-1 text-[10px]">
+                  <div class="flex justify-between font-bold"><span>Total Belanja:</span><span>Rp {{ fmt(order.total_amount) }}</span></div>
+                  <div class="flex justify-between"><span>Metode Bayar:</span><span class="uppercase font-semibold">{{ order.payment_method }}</span></div>
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 my-2"></div>
+
+                <div class="text-center text-[9px] text-gray-400">
+                  <p>Terima kasih atas kunjungan Anda</p>
+                  <p class="mt-0.5">Produk Olahan Ikan Segar Gorontalo</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button @click="showReceiptModal = false" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold text-xs rounded-xl hover:bg-gray-50 transition cursor-pointer">
+                Tutup
+              </button>
+              <button @click="printOrderReceipt" class="flex-1 py-2.5 bg-primary text-white font-semibold text-xs rounded-xl hover:bg-primary-dark transition shadow-md shadow-primary/20 cursor-pointer flex items-center justify-center gap-1.5">
+                <Icon icon="mdi:printer" /> Cetak Struk
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
   </AdminLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({ order: Object });
+const page = usePage();
+const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 const showRejectionModal = ref(false);
+const showReceiptModal = ref(false);
 const rejectionReason = ref('');
 
 function fmt(p) { return Number(p).toLocaleString('id-ID'); }
@@ -173,5 +268,32 @@ function submitRejection() {
       showRejectionModal.value = false;
     }
   });
+}
+
+function printOrderReceipt() {
+  const printContent = document.getElementById('order-receipt-print-area').innerHTML;
+  const printWindow = window.open('', '_blank', 'width=380,height=600');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Struk - ${props.order.order_code}</title>
+        <style>
+          body { font-family: 'Courier New', Courier, monospace; font-size: 12px; padding: 10px; margin: 0; width: 300px; line-height: 1.3; }
+          img { max-width: 120px; height: auto; display: block; margin: 0 auto 8px auto; object-fit: contain; border-radius: 6px; }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .bold { font-weight: bold; }
+          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          table { width: 100%; border-collapse: collapse; }
+          td { padding: 2px 0; vertical-align: top; }
+        </style>
+      </head>
+      <body>
+        ${printContent}
+        <script>window.onload=function(){window.print();window.close();};<\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 </script>

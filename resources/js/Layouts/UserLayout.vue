@@ -50,8 +50,8 @@
                       </Link>
                     </template>
                     <template v-else>
-                      <Link href="/admin" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Icon icon="mdi:view-dashboard-outline" class="text-lg" /> Panel Admin
+                      <Link :href="$page.props.auth.user.role === 'kasir' ? '/admin/stock' : '/admin'" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:view-dashboard-outline" class="text-lg" /> {{ $page.props.auth.user.role === 'kasir' ? 'Panel Kasir' : 'Panel Admin' }}
                       </Link>
                     </template>
                     <hr class="my-1 border-gray-100 dark:border-gray-700">

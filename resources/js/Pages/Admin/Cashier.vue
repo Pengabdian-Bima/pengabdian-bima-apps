@@ -203,7 +203,7 @@
 
             <!-- Submit Button -->
             <button 
-              @click="submitTransaction" 
+              @click="triggerConfirm" 
               :disabled="cart.length === 0 || !customerName || cashReceived < totalAmount || processing"
               class="w-full py-3 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
             >
@@ -231,6 +231,10 @@
             <!-- Thermal Receipt Design -->
             <div id="receipt-print-area" class="bg-gray-50 border border-gray-200 rounded-2xl p-5 font-mono text-xs text-gray-800 space-y-4">
               <div class="text-center">
+                <!-- Receipt Logo -->
+                <div class="flex justify-center mb-2">
+                  <img src="/img/logo-brand.jpeg" alt="Logo Brand" class="h-12 w-auto object-contain rounded-md mx-auto" />
+                </div>
                 <h4 class="font-bold text-sm uppercase">UD FLAMBOYAN</h4>
                 <p class="text-[10px] text-gray-500 mt-0.5">Biskuit Ikan Huluu Danau Limboto</p>
                 <p class="text-[9px] text-gray-400 mt-1">Gorontalo, Indonesia</p>
@@ -292,6 +296,33 @@
             </div>
           </div>
         </div>
+      </div>
+    </Transition>
+
+    <!-- CONFIRMATION MODAL -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showConfirmModal = false">
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95" appear>
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+              <Icon icon="mdi:help-circle-outline" class="text-3xl" />
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">Konfirmasi Transaksi</h3>
+            <p class="text-sm text-gray-500 mt-2">
+              Apakah Anda yakin ingin memproses transaksi tunai ini?
+            </p>
+            <div class="mt-4 p-3 bg-gray-50 rounded-xl space-y-1 text-left text-xs">
+              <div class="flex justify-between"><span>Pelanggan:</span><span class="font-bold text-gray-800">{{ customerName }}</span></div>
+              <div class="flex justify-between"><span>Total Belanja:</span><span class="font-bold text-gray-800">Rp {{ formatPrice(totalAmount) }}</span></div>
+              <div class="flex justify-between"><span>Uang Diterima:</span><span class="font-bold text-gray-800">Rp {{ formatPrice(cashReceived) }}</span></div>
+              <div class="flex justify-between text-green-600 font-bold border-t border-gray-200/60 pt-1 mt-1"><span>Kembalian:</span><span>Rp {{ formatPrice(changeAmount) }}</span></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button @click="showConfirmModal = false" class="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer">Batal</button>
+              <button @click="confirmSubmit" class="flex-1 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-dark transition shadow-md shadow-primary/20 cursor-pointer">Ya, Proses</button>
+            </div>
+          </div>
+        </Transition>
       </div>
     </Transition>
   </AdminLayout>
@@ -399,6 +430,19 @@ watch(totalAmount, (newTotal) => {
   }
 });
 
+const showConfirmModal = ref(false);
+
+function triggerConfirm() {
+  if (cart.value.length === 0) return;
+  if (cashReceived.value < totalAmount.value) return;
+  showConfirmModal.value = true;
+}
+
+function confirmSubmit() {
+  showConfirmModal.value = false;
+  submitTransaction();
+}
+
 // Submit checkout to the backend
 function submitTransaction() {
   if (cart.value.length === 0) return;
@@ -470,6 +514,14 @@ function printReceipt() {
             margin: 0;
             width: 300px;
             line-height: 1.3;
+          }
+          img {
+            max-width: 120px;
+            height: auto;
+            display: block;
+            margin: 0 auto 8px auto;
+            object-fit: contain;
+            border-radius: 6px;
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }

@@ -49,7 +49,7 @@
         <div class="flex items-center gap-3">
           <div class="text-right hidden sm:block">
             <p class="text-sm font-semibold text-gray-800">{{ $page.props.auth.user?.name }}</p>
-            <p class="text-xs text-gray-500">Administrator</p>
+            <p class="text-xs text-gray-500">{{ $page.props.auth.user?.role === 'kasir' ? 'Kasir' : 'Administrator' }}</p>
           </div>
           <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center">
             <span class="text-white font-bold">{{ $page.props.auth.user?.name?.charAt(0) }}</span>
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
@@ -116,15 +116,26 @@ onMounted(() => {
 });
 onUnmounted(() => window.removeEventListener('resize', handleResize));
 
-const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: 'mdi:view-dashboard' },
-  { href: '/admin/cashier', label: 'Kasir', icon: 'mdi:cash-register' },
-  { href: '/admin/products', label: 'Produk', icon: 'mdi:package-variant-closed' },
-  { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
-  { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
-  { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
-  { href: '/admin/reports', label: 'Laporan', icon: 'mdi:chart-bar' },
-];
+const menuItems = computed(() => {
+  const role = page.props.auth.user?.role;
+  if (role === 'kasir') {
+    return [
+      { href: '/admin', label: 'Dashboard', icon: 'mdi:view-dashboard' },
+      { href: '/admin/cashier', label: 'Kasir', icon: 'mdi:cash-register' },
+      { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
+      { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
+    ];
+  }
+  return [
+    { href: '/admin', label: 'Dashboard', icon: 'mdi:view-dashboard' },
+    { href: '/admin/cashier', label: 'Kasir', icon: 'mdi:cash-register' },
+    { href: '/admin/products', label: 'Produk', icon: 'mdi:package-variant-closed' },
+    { href: '/admin/categories', label: 'Kategori', icon: 'mdi:tag-multiple' },
+    { href: '/admin/stock', label: 'Stok Produk', icon: 'mdi:warehouse' },
+    { href: '/admin/orders', label: 'Pemesanan', icon: 'mdi:cart-check' },
+    { href: '/admin/reports', label: 'Laporan', icon: 'mdi:chart-bar' },
+  ];
+});
 
 function isActive(href) {
   if (href === '/admin') return page.url === '/admin';
