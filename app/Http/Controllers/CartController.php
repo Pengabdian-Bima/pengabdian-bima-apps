@@ -12,6 +12,10 @@ class CartController extends Controller
 {
     public function index()
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return redirect()->route('admin.dashboard')->with('error', 'Akun Admin/Non-User tidak memiliki akses ke fitur keranjang belanja.');
+        }
+
         $cart = Cart::with(['items.product'])
             ->where('user_id', auth()->id())
             ->first();
@@ -38,6 +42,10 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return back()->with('error', 'Akun Admin/Non-User tidak dapat menambahkan produk ke keranjang belanja.');
+        }
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
@@ -75,6 +83,10 @@ class CartController extends Controller
 
     public function update(Request $request, CartItem $cartItem)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return back()->with('error', 'Aksi tidak diizinkan untuk akun Admin.');
+        }
+
         $request->validate([
             'qty' => 'required|integer|min:1',
         ]);
@@ -90,6 +102,10 @@ class CartController extends Controller
 
     public function destroy(CartItem $cartItem)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return back()->with('error', 'Aksi tidak diizinkan untuk akun Admin.');
+        }
+
         $cartItem->delete();
         return back()->with('success', 'Produk berhasil dihapus dari keranjang.');
     }

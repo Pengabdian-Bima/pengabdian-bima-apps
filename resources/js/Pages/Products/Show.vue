@@ -69,18 +69,24 @@
           </div>
 
           <div class="border-t border-gray-100 dark:border-gray-800 mt-6 pt-6">
+            <!-- Non-Customer (Admin) Notice -->
+            <div v-if="isNonCustomer" class="p-3.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 text-amber-800 dark:text-amber-300 rounded-xl text-xs flex items-center gap-2 mb-4">
+              <Icon icon="mdi:shield-alert-outline" class="text-xl text-amber-600 shrink-0" />
+              <span>Anda masuk sebagai akun <strong>{{ $page.props.auth.user.role.toUpperCase() }}</strong>. Fitur keranjang & transaksi dinonaktifkan.</span>
+            </div>
+
             <div class="flex items-center gap-3">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah:</label>
               <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                <button @click="qty > 1 && qty--" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition"><Icon icon="mdi:minus" /></button>
-                <input v-model.number="qty" type="number" min="1" :max="product.stock" class="w-16 text-center border-x border-gray-200 dark:border-gray-700 py-2 outline-none dark:bg-gray-900 dark:text-white">
-                <button @click="qty < product.stock && qty++" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition"><Icon icon="mdi:plus" /></button>
+                <button @click="qty > 1 && qty--" :disabled="isNonCustomer" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition disabled:opacity-50"><Icon icon="mdi:minus" /></button>
+                <input v-model.number="qty" type="number" min="1" :max="product.stock" :disabled="isNonCustomer" class="w-16 text-center border-x border-gray-200 dark:border-gray-700 py-2 outline-none dark:bg-gray-900 dark:text-white disabled:opacity-50">
+                <button @click="qty < product.stock && qty++" :disabled="isNonCustomer" class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition disabled:opacity-50"><Icon icon="mdi:plus" /></button>
               </div>
             </div>
 
             <div class="flex gap-3 mt-6">
-              <button @click="addToCart" :disabled="product.stock === 0 || addingToCart"
-                class="flex-1 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2">
+              <button @click="addToCart" :disabled="product.stock === 0 || addingToCart || isNonCustomer"
+                class="flex-1 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 <Icon icon="mdi:cart-plus" class="text-xl" />
                 {{ addingToCart ? 'Menambahkan...' : 'Tambah ke Keranjang' }}
               </button>
@@ -168,13 +174,18 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({ product: Object, relatedProducts: Array });
+const page = usePage();
 const qty = ref(1);
 const addingToCart = ref(false);
+
+const isNonCustomer = computed(() => {
+  return page.props.auth.user && page.props.auth.user.role !== 'user';
+});
 
 const currentMainImage = ref(props.product.thumbnail_url || null);
 

@@ -14,6 +14,10 @@ class CheckoutController extends Controller
 {
     public function index()
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return redirect()->route('admin.dashboard')->with('error', 'Akun Admin/Non-User tidak memiliki akses ke fitur checkout.');
+        }
+
         $cart = Cart::with(['items.product'])
             ->where('user_id', auth()->id())
             ->first();
@@ -43,6 +47,10 @@ class CheckoutController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return back()->with('error', 'Akun Admin/Non-User tidak dapat melakukan transaksi checkout.');
+        }
+
         $request->validate([
             'address_id' => 'nullable|exists:user_addresses,id',
             'payment_method' => 'required|in:transfer,qris',

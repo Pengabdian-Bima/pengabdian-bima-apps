@@ -11,6 +11,10 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return redirect()->route('admin.orders.index')->with('info', 'Akun Admin diarahkan ke Halaman Pemesanan Admin.');
+        }
+
         $query = Order::where('user_id', auth()->id())
             ->with('paymentConfirmation');
 
