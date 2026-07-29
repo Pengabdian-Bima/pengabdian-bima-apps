@@ -26,28 +26,39 @@
               </button>
             </form>
             <template v-if="$page.props.auth.user">
-              <Link href="/keranjang" class="relative p-2 rounded-lg hover:bg-gray-100 transition">
-                <Icon icon="mdi:cart-outline" class="text-xl text-gray-600" />
+              <!-- Cart Link - Only for Customer Users -->
+              <Link v-if="$page.props.auth.user.role === 'user'" href="/keranjang" class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <Icon icon="mdi:cart-outline" class="text-xl text-gray-600 dark:text-gray-300" />
                 <span v-if="$page.props.cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-bold">{{ $page.props.cartCount }}</span>
               </Link>
               <div class="relative" ref="profileMenu">
-                <button @click="showMenu = !showMenu" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                <button @click="showMenu = !showMenu" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                   <div class="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center">
                     <span class="text-white text-sm font-bold">{{ $page.props.auth.user.name.charAt(0) }}</span>
                   </div>
-                  <span class="text-sm font-medium text-gray-700 hidden sm:block">{{ $page.props.auth.user.name }}</span>
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">{{ $page.props.auth.user.name }}</span>
                 </button>
                 <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100"
                   leave-active-class="transition duration-100" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-                  <div v-if="showMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                    <Link href="/pesanan" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      <Icon icon="mdi:package-variant-closed" class="text-lg" /> Pesanan Saya
-                    </Link>
-                    <Link href="/profil" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      <Icon icon="mdi:account-outline" class="text-lg" /> Profil
-                    </Link>
-                    <hr class="my-1 border-gray-100">
-                    <Link href="/logout" method="post" as="button" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-danger hover:bg-red-50">
+                  <div v-if="showMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50">
+                    <template v-if="$page.props.auth.user.role === 'user'">
+                      <Link href="/pesanan" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:package-variant-closed" class="text-lg" /> Pesanan Saya
+                      </Link>
+                      <Link href="/pre-order" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:clipboard-list-outline" class="text-lg" /> Pre-Order Saya
+                      </Link>
+                      <Link href="/profil" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:account-outline" class="text-lg" /> Profil
+                      </Link>
+                    </template>
+                    <template v-else>
+                      <Link :href="$page.props.auth.user.role === 'kasir' ? '/admin/stock' : '/admin'" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Icon icon="mdi:view-dashboard-outline" class="text-lg" /> {{ $page.props.auth.user.role === 'kasir' ? 'Panel Kasir' : 'Panel Admin' }}
+                      </Link>
+                    </template>
+                    <hr class="my-1 border-gray-100 dark:border-gray-700">
+                    <Link href="/logout" method="post" as="button" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-danger hover:bg-red-50 dark:hover:bg-red-900/20">
                       <Icon icon="mdi:logout" class="text-lg" /> Keluar
                     </Link>
                   </div>
@@ -146,7 +157,7 @@
               <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary transition-colors duration-300">
                 <Icon icon="mdi:facebook" class="text-xl" />
               </a>
-              <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary transition-colors duration-300">
+              <a :href="whatsappUrl" target="_blank" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors duration-300">
                 <Icon icon="mdi:whatsapp" class="text-xl" />
               </a>
             </div>
@@ -161,15 +172,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { Icon } from '@iconify/vue';
 
+const page = usePage();
 const showMenu = ref(false);
 const mobileMenu = ref(false);
 const profileMenu = ref(null);
 const isDark = ref(false);
 const searchQuery = ref('');
+
+const whatsappUrl = computed(() => {
+  let phone = page.props.fonntePhone || '6281356578805';
+  phone = phone.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.slice(1);
+  }
+  return `https://wa.me/${phone}?text=${encodeURIComponent('Halo Admin UD Flamboyan!')}`;
+});
 
 function submitSearch() {
   if (searchQuery.value.trim()) {
@@ -194,8 +215,6 @@ const navItems = [
   { href: '/produk', label: 'Produk' },
   { href: '/artikel', label: 'Artikel' },
 ];
-
-const page = usePage();
 
 function isActive(href) {
   if (href === '/') return page.url === '/';

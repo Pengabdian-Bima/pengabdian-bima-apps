@@ -1,7 +1,16 @@
 <template>
   <Head title="Laporan - Admin" />
   <AdminLayout>
-    <h1 class="text-2xl font-bold text-text mb-6">Laporan</h1>
+    <h1 class="text-2xl font-bold text-text mb-2">Laporan Penjualan</h1> 
+    <!-- Sub Navigation Tabs -->
+    <div class="flex border-b border-gray-200 mb-6">
+      <Link href="/admin/reports" class="px-5 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary transition">
+        Laporan Penjualan Umum
+      </Link>
+      <Link href="/admin/reports/products" class="px-5 py-2.5 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-primary transition">
+        Laporan Per Produk
+      </Link>
+    </div>
 
     <!-- Period Filter -->
     <div class="flex flex-wrap gap-2 mb-6">

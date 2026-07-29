@@ -6,14 +6,26 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StockHistory;
+use App\Services\FonnteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CheckoutController extends Controller
 {
+    protected FonnteService $fonnteService;
+
+    public function __construct(FonnteService $fonnteService)
+    {
+        $this->fonnteService = $fonnteService;
+    }
+
     public function index()
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return redirect()->route('admin.dashboard')->with('error', 'Akun Admin/Non-User tidak memiliki akses ke fitur checkout.');
+        }
+
         $cart = Cart::with(['items.product'])
             ->where('user_id', auth()->id())
             ->first();
@@ -22,13 +34,20 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang belanja kosong.');
         }
 
-        $items = $cart->items->map(fn ($item) => [
-            'id' => $item->id,
-            'product_name' => $item->product->name,
-            'price' => $item->price,
-            'qty' => $item->qty,
-            'subtotal' => $item->subtotal,
-        ]);
+        $items = $cart->items->map(function ($item) {
+            $effectivePrice = $item->product->final_price;
+            return [
+                'id' => $item->id,
+                'product_name' => $item->product->name,
+                'original_price' => $item->product->price,
+                'price' => $effectivePrice,
+                'is_discount_active' => $item->product->is_discount_active,
+                'discount_percent' => $item->product->discount_percent,
+                'qty' => $item->qty,
+                'weight' => $item->product->weight > 0 ? $item->product->weight : 200,
+                'subtotal' => $effectivePrice * $item->qty,
+            ];
+        });
 
         $total = $items->sum('subtotal');
 
@@ -36,21 +55,31 @@ class CheckoutController extends Controller
             'items' => $items,
             'total' => $total,
             'user' => auth()->user(),
+            'addresses' => auth()->user()->addresses()->latest()->get(),
         ]);
     }
 
     public function store(Request $request)
     {
+        if (auth()->check() && auth()->user()->role !== 'user') {
+            return back()->with('error', 'Akun Admin/Non-User tidak dapat melakukan transaksi checkout.');
+        }
+
         $request->validate([
-            'shipping_name' => 'required|string|max:255',
-            'shipping_phone' => 'required|string|max:20',
-            'shipping_address' => 'required|string',
+            'address_id' => 'nullable|exists:user_addresses,id',
+            'payment_method' => 'required|in:transfer,qris',
+            'shipping_name' => 'required_without:address_id|nullable|string|max:255',
+            'shipping_phone' => 'required_without:address_id|nullable|string|max:20',
+            'shipping_address' => 'required_without:address_id|nullable|string',
             'shipping_province' => 'nullable|string',
             'shipping_city' => 'nullable|string',
+            'shipping_city_id' => 'required_without:address_id|nullable',
             'shipping_district' => 'nullable|string',
             'shipping_village' => 'nullable|string',
             'shipping_postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string',
+            'courier' => 'required|string|in:jne,jnt,sicepat,ninja,pos',
+            'courier_service' => 'required|string',
         ]);
 
         $cart = Cart::with(['items.product'])
@@ -68,32 +97,94 @@ class CheckoutController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request, $cart) {
-            $total = $cart->items->sum(fn ($item) => $item->qty * $item->price);
-
-            $order = Order::create([
-                'user_id' => auth()->id(),
-                'order_code' => Order::generateOrderCode(),
-                'total_amount' => $total,
-                'status' => 'menunggu_pembayaran',
+        // Retrieve shipping destination and calculate actual cost
+        $destinationCityId = null;
+        $shippingData = [];
+        if ($request->address_id) {
+            $address = \App\Models\UserAddress::where('user_id', auth()->id())
+                ->findOrFail($request->address_id);
+            $destinationCityId = $address->city_id;
+            $shippingData = [
+                'shipping_name' => $address->recipient_name,
+                'shipping_phone' => $address->phone,
+                'shipping_address' => $address->address,
+                'shipping_province' => $address->province,
+                'shipping_city' => $address->city,
+                'shipping_city_id' => $address->city_id,
+                'shipping_district' => $address->district,
+                'shipping_village' => $address->village,
+                'shipping_postal_code' => $address->postal_code,
+            ];
+        } else {
+            $destinationCityId = $request->shipping_city_id;
+            $shippingData = [
                 'shipping_name' => $request->shipping_name,
                 'shipping_phone' => $request->shipping_phone,
                 'shipping_address' => $request->shipping_address,
                 'shipping_province' => $request->shipping_province,
                 'shipping_city' => $request->shipping_city,
+                'shipping_city_id' => $request->shipping_city_id,
                 'shipping_district' => $request->shipping_district,
                 'shipping_village' => $request->shipping_village,
                 'shipping_postal_code' => $request->shipping_postal_code,
+            ];
+        }
+
+        if (!$destinationCityId) {
+            return back()->with('error', 'Kota tujuan pengiriman tidak valid.');
+        }
+
+        // Calculate total weight of the products (default to 200g if weight is 0 or null)
+        $totalWeight = 0;
+        foreach ($cart->items as $item) {
+            $weight = $item->product->weight > 0 ? $item->product->weight : 200;
+            $totalWeight += $weight * $item->qty;
+        }
+
+        // Fetch shipping cost from RajaOngkir
+        $rajaOngkirService = app(\App\Services\RajaOngkirService::class);
+        $shippingOptions = $rajaOngkirService->calculateCost($destinationCityId, $totalWeight, $request->courier);
+
+        $calculatedCost = null;
+        if (!empty($shippingOptions)) {
+            foreach ($shippingOptions[0]['costs'] ?? [] as $costOption) {
+                if ($costOption['service'] === $request->courier_service) {
+                    $calculatedCost = $costOption['cost'][0]['value'] ?? null;
+                    break;
+                }
+            }
+        }
+
+        if ($calculatedCost === null) {
+            return back()->with('error', 'Layanan kurir atau ongkos kirim tidak valid.');
+        }
+
+        $createdOrder = null;
+
+        DB::transaction(function () use ($request, $cart, $shippingData, $calculatedCost, &$createdOrder) {
+            $subtotal = $cart->items->sum(fn ($item) => $item->qty * $item->product->final_price);
+            $total = $subtotal + $calculatedCost;
+
+            $createdOrder = Order::create(array_merge([
+                'user_id' => auth()->id(),
+                'order_code' => Order::generateOrderCode(),
+                'total_amount' => $total,
+                'shipping_cost' => $calculatedCost,
+                'courier' => $request->courier,
+                'courier_service' => $request->courier_service,
+                'payment_method' => $request->payment_method,
+                'status' => 'menunggu_pembayaran',
                 'notes' => $request->notes,
-            ]);
+            ], $shippingData));
 
             foreach ($cart->items as $item) {
+                $effectivePrice = $item->product->final_price;
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id' => $createdOrder->id,
                     'product_id' => $item->product_id,
                     'qty' => $item->qty,
-                    'price' => $item->price,
-                    'subtotal' => $item->qty * $item->price,
+                    'price' => $effectivePrice,
+                    'subtotal' => $item->qty * $effectivePrice,
                 ]);
 
                 // Reduce stock
@@ -107,13 +198,17 @@ class CheckoutController extends Controller
                     'quantity' => $item->qty,
                     'stock_before' => $stockBefore,
                     'stock_after' => $product->stock,
-                    'note' => "Pesanan #{$order->order_code}",
+                    'note' => "Pesanan #{$createdOrder->order_code}",
                 ]);
             }
 
             // Clear cart
             $cart->items()->delete();
         });
+
+        if ($createdOrder) {
+            $this->fonnteService->sendNewOrderNotification($createdOrder);
+        }
 
         return redirect()->route('orders.index')->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
     }

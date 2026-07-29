@@ -12,6 +12,7 @@ class ProfileController extends Controller
     {
         return Inertia::render('Profile/Index', [
             'user' => auth()->user(),
+            'addresses' => auth()->user()->addresses()->latest()->get(),
         ]);
     }
 

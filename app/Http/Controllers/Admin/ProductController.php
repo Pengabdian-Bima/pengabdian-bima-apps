@@ -25,6 +25,9 @@ class ProductController extends Controller
                 'category' => $p->category?->name,
                 'price' => $p->price,
                 'cost_price' => $p->cost_price,
+                'discount_percent' => $p->discount_percent,
+                'is_discount_active' => $p->is_discount_active,
+                'final_price' => $p->final_price,
                 'stock' => $p->stock,
                 'min_stock' => $p->min_stock,
                 'status' => $p->status,
@@ -53,6 +56,10 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'discount_start_at' => 'nullable|date',
+            'discount_end_at' => 'nullable|date|after_or_equal:discount_start_at',
+            'is_discount_active' => 'boolean',
             'stock' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
             'weight' => 'required|numeric|min:0',
@@ -64,6 +71,8 @@ class ProductController extends Controller
         $data = $request->except(['thumbnail', 'gallery']);
         $data['slug'] = Str::slug($request->name);
         $data['status'] = $request->boolean('status', true);
+        $data['is_discount_active'] = $request->boolean('is_discount_active', true);
+        $data['discount_percent'] = $request->discount_percent ?? 0;
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
@@ -108,6 +117,10 @@ class ProductController extends Controller
                 'description' => $product->description,
                 'price' => $product->price,
                 'cost_price' => $product->cost_price,
+                'discount_percent' => $product->discount_percent,
+                'discount_start_at' => $product->discount_start_at ? $product->discount_start_at->format('Y-m-d\TH:i') : null,
+                'discount_end_at' => $product->discount_end_at ? $product->discount_end_at->format('Y-m-d\TH:i') : null,
+                'is_discount_active' => (bool)($product->getRawOriginal('is_discount_active') ?? true),
                 'stock' => $product->stock,
                 'min_stock' => $product->min_stock,
                 'weight' => $product->weight,
@@ -130,6 +143,10 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'discount_start_at' => 'nullable|date',
+            'discount_end_at' => 'nullable|date|after_or_equal:discount_start_at',
+            'is_discount_active' => 'boolean',
             'weight' => 'required|numeric|min:0',
             'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'gallery.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -139,6 +156,8 @@ class ProductController extends Controller
         $data = $request->except(['thumbnail', 'gallery', 'stock']);
         $data['slug'] = Str::slug($request->name);
         $data['status'] = $request->boolean('status', true);
+        $data['is_discount_active'] = $request->boolean('is_discount_active', true);
+        $data['discount_percent'] = $request->discount_percent ?? 0;
 
         if ($request->hasFile('thumbnail')) {
             if ($product->thumbnail) {

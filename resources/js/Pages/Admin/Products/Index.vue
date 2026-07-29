@@ -22,7 +22,18 @@
                 </div>
               </td>
               <td class="px-4 py-3 text-gray-600">{{ p.category }}</td>
-              <td class="px-4 py-3 font-medium text-primary">Rp {{ fmt(p.price) }}</td>
+              <td class="px-4 py-3 font-medium">
+                <div v-if="p.is_discount_active">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-primary font-bold">Rp {{ fmt(p.final_price) }}</span>
+                    <span class="px-1.5 py-0.5 bg-danger/10 text-danger text-[10px] font-bold rounded-md">-{{ p.discount_percent }}%</span>
+                  </div>
+                  <span class="line-through text-gray-400 text-xs block">Rp {{ fmt(p.price) }}</span>
+                </div>
+                <div v-else>
+                  <span class="text-primary font-bold">Rp {{ fmt(p.price) }}</span>
+                </div>
+              </td>
               <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', p.stock <= p.min_stock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700']">{{ p.stock }}</span></td>
               <td class="px-4 py-3"><span :class="['text-xs px-2 py-1 rounded-full font-medium', p.status ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500']">{{ p.status ? 'Aktif' : 'Nonaktif' }}</span></td>
               <td class="px-4 py-3">

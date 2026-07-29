@@ -7,14 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'user_id', 'order_code', 'total_amount', 'status',
+        'user_id', 'order_code', 'total_amount', 'payment_method', 'status',
         'shipping_name', 'shipping_phone', 'shipping_address',
-        'shipping_province', 'shipping_city', 'shipping_district',
+        'shipping_province', 'shipping_city', 'shipping_city_id', 'shipping_district',
         'shipping_village', 'shipping_postal_code', 'notes',
+        'shipping_cost', 'courier', 'courier_service', 'rejection_reason'
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
     ];
 
     public function user()
