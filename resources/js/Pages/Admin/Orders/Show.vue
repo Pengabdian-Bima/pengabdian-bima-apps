@@ -27,17 +27,36 @@
               <p class="font-semibold">Rp {{ fmt(item.subtotal) }}</p>
             </div>
           </div>
-          <div class="flex justify-between mt-4 pt-4 border-t border-gray-100 text-lg font-bold"><span>Total</span><span class="text-primary">Rp {{ fmt(order.total_amount) }}</span></div>
+          <div class="mt-4 pt-4 border-t border-gray-100 space-y-2 text-sm">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal Produk</span>
+              <span class="font-medium text-text">Rp {{ fmt(order.subtotal || (order.total_amount - (order.shipping_cost || 0))) }}</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Perkiraan Biaya Pengiriman ({{ order.courier }} {{ order.courier_service }})</span>
+              <span class="font-medium text-text">Rp {{ fmt(order.shipping_cost || 0) }}</span>
+            </div>
+            <div class="flex justify-between pt-2 border-t border-gray-100 text-base font-bold">
+              <span>Total Tagihan</span>
+              <span class="text-primary">Rp {{ fmt(order.total_amount) }}</span>
+            </div>
+          </div>
         </div>
         <!-- Pelanggan -->
         <div class="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 class="font-semibold text-text mb-4">Info Pelanggan & Pengiriman</h2>
-          <div class="text-sm space-y-1 text-gray-600">
-            <p><strong>{{ order.user.name }}</strong> ({{ order.user.email }})</p>
-            <p>HP: {{ order.user.phone || order.shipping_phone }}</p>
-            <p class="mt-2">Penerima: <strong>{{ order.shipping_name }}</strong> ({{ order.shipping_phone }})</p>
-            <p>{{ order.shipping_address }}</p>
-            <p v-if="order.notes" class="mt-2 italic">Catatan: {{ order.notes }}</p>
+          <div class="text-sm space-y-1.5 text-gray-600">
+            <p>Pemesan: <strong>{{ order.user.name }}</strong> ({{ order.user.email }})</p>
+            <p>Penerima: <strong>{{ order.shipping_name }}</strong> ({{ order.shipping_phone }})</p>
+            <p class="text-gray-700">Alamat Lengkap: {{ order.shipping_address }}</p>
+            <p v-if="order.shipping_province" class="text-xs text-gray-500">
+              {{ [order.shipping_village, order.shipping_district, order.shipping_city, order.shipping_province, order.shipping_postal_code].filter(Boolean).join(', ') }}
+            </p>
+            <div class="pt-2 border-t border-gray-50 mt-2 flex items-center justify-between text-xs">
+              <span class="text-gray-500">Ekspedisi Kurir:</span>
+              <span class="font-bold text-text bg-gray-100 px-2 py-0.5 rounded">{{ order.courier }} - {{ order.courier_service }}</span>
+            </div>
+            <p v-if="order.notes" class="mt-2 italic text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">Catatan: {{ order.notes }}</p>
           </div>
         </div>
       </div>

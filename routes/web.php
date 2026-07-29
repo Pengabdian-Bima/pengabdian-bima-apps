@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/pesanan/{order}/bayar', fn (\App\Models\Order $order) => redirect()->route('orders.show', $order));
     Route::post('/pesanan/{order}/bayar', [OrderController::class, 'storePayment'])->name('orders.store-payment');
     Route::post('/pesanan/{order}/batal', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('/pesanan/{order}/selesai', [OrderController::class, 'complete'])->name('orders.complete');
