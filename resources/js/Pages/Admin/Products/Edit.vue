@@ -24,7 +24,7 @@
             <!-- Checkbox Diskon Aktif -->
             <div class="flex items-center gap-2">
               <input v-model="form.is_discount_active" type="checkbox" id="is_discount_active_edit" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
-              <label for="is_discount_active_edit" class="text-sm font-medium text-gray-700">Aktif</label>
+              <label for="is_discount_active_edit" class="text-sm font-medium text-gray-700">Aktifkan Diskon</label>
             </div>
           </div>
 
@@ -56,7 +56,7 @@
 
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label><textarea v-model="form.description" rows="4" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary"></textarea></div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Foto Utama (Klik untuk perbesar)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk</label>
           <div v-if="product.thumbnail_url" class="relative inline-block group cursor-pointer" @click="openPreview(product.thumbnail_url)">
             <img :src="product.thumbnail_url" class="w-24 h-24 rounded-xl object-cover mb-2 border border-gray-200 group-hover:opacity-90 transition">
             <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center text-white text-xs font-semibold gap-1 transition">
@@ -66,7 +66,7 @@
           <input type="file" @change="form.thumbnail = $event.target.files[0]" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary">
         </div>
         <div v-if="product.images?.length">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Galeri Saat Ini (Klik gambar untuk perbesar)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Galeri Saat Ini</label>
           <div class="flex gap-2 flex-wrap">
             <div v-for="img in product.images" :key="img.id" class="relative group cursor-pointer" @click="openPreview(img.url)">
               <img :src="img.url" class="w-20 h-20 rounded-lg object-cover border border-gray-200 group-hover:opacity-90 transition">

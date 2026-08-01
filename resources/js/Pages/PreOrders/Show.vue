@@ -60,8 +60,7 @@
           <div>
             <h3 class="font-bold text-orange-800 dark:text-orange-300 text-sm">Menunggu Pembayaran</h3>
             <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-              Ekspedisi: <strong>{{ preOrder.courier }} {{ preOrder.courier_service }}</strong> |
-              Metode Bayar: <strong class="uppercase">{{ preOrder.payment_method }}</strong>
+              Ekspedisi: <strong>{{ preOrder.courier }} {{ preOrder.courier_service }}</strong>
             </p>
           </div>
         </div>
@@ -74,14 +73,7 @@
           </h2>
           
           <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 text-xs space-y-2">
-            <p class="text-gray-600 dark:text-gray-300">Silakan lakukan pembayaran sebesar <strong class="text-primary">Rp {{ fmt(preOrder.total_amount) }}</strong> ke:</p>
-            <div v-if="preOrder.payment_method === 'transfer'" class="font-mono text-gray-800 dark:text-gray-200 space-y-1">
-              <p>• Bank BRI: <span class="font-bold select-all">1234-5678-9012-3456</span> a.n. UD Flamboyan</p>
-            </div>
-            <div v-else class="text-center py-2">
-              <img src="/img/qris-barcode.png" alt="QRIS" class="w-44 h-44 object-contain mx-auto border border-gray-200 rounded-xl bg-white p-2 mb-1" />
-              <p class="text-[10px] text-gray-400">Scan QRIS toko untuk pembayaran</p>
-            </div>
+            <p class="text-gray-600 dark:text-gray-300">Silakan lakukan pembayaran sebesar <strong class="text-primary font-bold">Rp {{ fmt(preOrder.total_amount) }}</strong>.</p>
           </div>
 
           <p class="text-xs text-gray-500">
@@ -187,9 +179,14 @@
           </div>
 
           <!-- Cancel button -->
-          <div v-if="['pending', 'accepted'].includes(preOrder.status)">
-            <button @click="confirmCancel = true" class="w-full py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-semibold text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
+          <div v-if="['pending', 'accepted', 'processing'].includes(preOrder.status)" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
+            <h2 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2 text-sm">
+              <Icon icon="mdi:close-circle-outline" class="text-red-500 text-lg" />
               Batalkan Pre-Order
+            </h2>
+            <p class="text-xs text-gray-500 mb-4">Apakah Anda ingin membatalkan Pre-Order ini?</p>
+            <button @click="confirmCancel = true" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-red-500/20 transition cursor-pointer flex items-center justify-center gap-1.5">
+              <Icon icon="mdi:cancel" /> Batalkan Pre-Order
             </button>
           </div>
         </div>
@@ -200,14 +197,14 @@
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="confirmCancel" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="confirmCancel = false">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-          <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon icon="mdi:alert-outline" class="text-danger text-3xl" />
+          <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+            <Icon icon="mdi:alert-outline" class="text-3xl" />
           </div>
           <h3 class="font-bold text-gray-900 dark:text-white text-lg">Batalkan Pre-Order?</h3>
-          <p class="text-sm text-gray-500 mt-2">Pre-Order <strong>{{ preOrder.po_code }}</strong> akan dibatalkan dan tidak dapat dikembalikan.</p>
+          <p class="text-xs text-gray-500 mt-2">Pre-Order <strong>{{ preOrder.po_code }}</strong> akan dibatalkan dan tidak dapat dikembalikan.</p>
           <div class="flex gap-3 mt-6">
             <button @click="confirmCancel = false" class="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer">Kembali</button>
-            <button @click="cancelPO" class="flex-1 py-2.5 bg-danger text-white text-xs font-semibold rounded-xl hover:bg-red-600 transition cursor-pointer">Ya, Batalkan</button>
+            <button @click="cancelPO" class="flex-1 py-2.5 bg-red-600 text-white text-xs font-semibold rounded-xl hover:bg-red-700 transition cursor-pointer">Ya, Batalkan</button>
           </div>
         </div>
       </div>
@@ -253,7 +250,12 @@
                     <tr v-for="(item, idx) in preOrder.items" :key="idx">
                       <td class="py-1">
                         <div>{{ item.product_name }}</div>
-                        <div class="text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</div>
+                        <div class="text-gray-500">
+                          {{ item.qty }} x Rp {{ fmt(item.price) }}
+                          <span v-if="Number(item.original_price || item.price) > Number(item.price)" class="text-[9px] text-red-600 font-bold ml-1">
+                            (Diskon -Rp {{ fmt(Number(item.original_price) - Number(item.price)) }})
+                          </span>
+                        </div>
                       </td>
                       <td class="text-right py-1 font-semibold align-bottom">Rp {{ fmt(item.subtotal) }}</td>
                     </tr>
@@ -263,10 +265,13 @@
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
 
                 <div class="space-y-1 text-[10px]">
-                  <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ fmt(preOrder.total_amount - (preOrder.shipping_cost || 0)) }}</span></div>
+                  <div class="flex justify-between"><span>Subtotal Produk:</span><span>Rp {{ fmt(preOrder.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) * item.qty), 0)) }}</span></div>
+                  <div v-if="preOrder.items.some(item => Number(item.original_price || item.price) > Number(item.price))" class="flex justify-between text-red-600 font-semibold">
+                    <span>Total Diskon:</span>
+                    <span>-Rp {{ fmt(preOrder.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) - Number(item.price)) * item.qty, 0)) }}</span>
+                  </div>
                   <div v-if="preOrder.shipping_cost" class="flex justify-between"><span>Ongkir:</span><span>Rp {{ fmt(preOrder.shipping_cost) }}</span></div>
                   <div class="flex justify-between font-bold"><span>Total Bayar:</span><span>Rp {{ fmt(preOrder.total_amount) }}</span></div>
-                  <div class="flex justify-between"><span>Metode Bayar:</span><span class="uppercase font-semibold">{{ preOrder.payment_method }}</span></div>
                 </div>
 
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
@@ -343,7 +348,6 @@ const whatsappPaymentConfirmUrl = computed(() => {
   }).join('\n');
 
   const courierText = props.preOrder.courier ? `${props.preOrder.courier} ${props.preOrder.courier_service}` : '-';
-  const paymentMethodText = props.preOrder.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank Manual';
   const estDays = props.preOrder.estimated_days ? `${props.preOrder.estimated_days} Hari` : '-';
 
   const rawText = `Halo Admin UD Flamboyan, saya ingin mengonfirmasi pembayaran untuk Pre-Order saya:
@@ -352,7 +356,6 @@ const whatsappPaymentConfirmUrl = computed(() => {
 • Kode PO: #${props.preOrder.po_code}
 • Pemesan: ${props.preOrder.shipping_name}
 • Estimasi Pengerjaan: ${estDays}
-• Metode Bayar: ${paymentMethodText}
 
 *Rincian Produk:*
 ${itemsText}
@@ -372,27 +375,64 @@ function cancelPO() {
 }
 
 function printPOReceipt() {
-  const printContent = document.getElementById('po-receipt-print-area').innerHTML;
+  const printElement = document.getElementById('po-receipt-print-area');
+  if (!printElement) return;
+
   const printWindow = window.open('', '_blank', 'width=380,height=600');
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
       <head>
         <title>Struk PO - ${props.preOrder.po_code}</title>
         <style>
-          body { font-family: 'Courier New', Courier, monospace; font-size: 12px; padding: 10px; margin: 0; width: 300px; line-height: 1.3; }
-          img { max-width: 120px; height: auto; display: block; margin: 0 auto 8px auto; object-fit: contain; border-radius: 6px; }
+          @page { size: auto; margin: 0mm; }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            padding: 15px;
+            margin: 0;
+            width: 280px;
+            box-sizing: border-box;
+            line-height: 1.3;
+          }
+          img {
+            max-width: 90px;
+            height: auto;
+            display: block;
+            margin: 0 auto 6px auto;
+          }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; }
-          td { padding: 2px 0; vertical-align: top; }
+          .font-bold, .bold { font-weight: bold; }
+          .font-semibold { font-weight: 600; }
+          .uppercase { text-transform: uppercase; }
+          .my-2 { margin-top: 8px; margin-bottom: 8px; }
+          .mb-2 { margin-bottom: 8px; }
+          .mt-0.5 { margin-top: 2px; }
+          .mt-1 { margin-top: 4px; }
+          .py-1 { padding-top: 4px; padding-bottom: 4px; }
+          .space-y-1 > * + * { margin-top: 4px; }
+          .space-y-4 > * + * { margin-top: 12px; }
+          .border-t { border-top: 1px dashed #000 !important; }
+          .border-dashed { border-style: dashed !important; }
+          .border-gray-300 { border-color: #000 !important; }
+          .flex { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+          .justify-between { justify-content: space-between !important; }
+          .justify-center { justify-content: center !important; }
+          table { width: 100% !important; border-collapse: collapse !important; margin: 4px 0 !important; }
+          td, th { padding: 3px 0 !important; vertical-align: top !important; font-size: 11px !important; }
+          .align-bottom { vertical-align: bottom !important; }
+          .text-primary { color: #000 !important; }
+          .text-gray-500, .text-gray-400 { color: #444 !important; }
         </style>
       </head>
-      <body>${printContent}</body>
+      <body>${printElement.innerHTML}</body>
     </html>
   `);
   printWindow.document.close();
-  setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
+  printWindow.focus();
+  setTimeout(() => { printWindow.print(); printWindow.close(); }, 350);
 }
 </script>

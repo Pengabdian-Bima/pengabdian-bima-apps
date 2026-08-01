@@ -8,6 +8,17 @@
         <!-- Left 2 Columns -->
         <div class="lg:col-span-2 space-y-6">
           
+          <!-- Peringatan Nomor WhatsApp Aktif & Alamat Wajib -->
+          <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-2xl text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+            <Icon icon="mdi:whatsapp" class="text-emerald-600 text-2xl shrink-0 mt-0.5" />
+            <div>
+              <h4 class="font-bold text-emerald-950 text-sm">Wajib Menggunakan Nomor WhatsApp Aktif & Alamat Lengkap!</h4>
+              <p class="mt-1 text-emerald-800 text-xs leading-relaxed">
+                Pastikan nomor HP yang Anda cantumkan adalah <strong>nomor WhatsApp yang sedang AKTIF</strong>. Penjual akan langsung menghubungi Anda via WhatsApp untuk mengonfirmasi pesanan, koordinasi pengiriman, dan rincian pembayaran.
+              </p>
+            </div>
+          </div>
+
           <!-- Shipping Address Section (Shopee-like) -->
           <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-text mb-4 flex items-center gap-2">
@@ -177,76 +188,6 @@
 
             <div v-else-if="form.courier" class="mt-6 p-4 bg-yellow-50 text-yellow-800 rounded-xl text-xs">
               Tidak ada layanan pengiriman yang tersedia untuk kurir ini. Silakan pilih kurir lain atau cek kembali alamat Anda.
-            </div>
-          </div>
-
-          <!-- Payment Method Selection -->
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-              <Icon icon="mdi:credit-card-outline" class="text-primary text-2xl" /> Metode Pembayaran
-            </h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <!-- Transfer Bank -->
-              <label :class="['flex items-start gap-4 p-4 rounded-2xl border cursor-pointer transition-all', form.payment_method === 'transfer' ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']">
-                <input type="radio" value="transfer" v-model="form.payment_method" class="sr-only">
-                <div :class="['w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5', form.payment_method === 'transfer' ? 'border-primary' : 'border-gray-300']">
-                  <div v-if="form.payment_method === 'transfer'" class="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                </div>
-                <div>
-                  <h3 class="font-bold text-text flex items-center gap-1.5">
-                    <Icon icon="mdi:bank" class="text-lg text-primary" /> Transfer Bank
-                  </h3>
-                  <p class="text-xs text-gray-500 mt-1">Manual Transfer via BNI, BRI, BCA, Mandiri</p>
-                </div>
-              </label>
-
-              <!-- QRIS -->
-              <label :class="['flex items-start gap-4 p-4 rounded-2xl border cursor-pointer transition-all', form.payment_method === 'qris' ? 'border-primary bg-primary/[0.02]' : 'border-gray-200 hover:border-gray-300']">
-                <input type="radio" value="qris" v-model="form.payment_method" class="sr-only">
-                <div :class="['w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5', form.payment_method === 'qris' ? 'border-primary' : 'border-gray-300']">
-                  <div v-if="form.payment_method === 'qris'" class="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                </div>
-                <div>
-                  <h3 class="font-bold text-text flex items-center gap-1.5">
-                    <Icon icon="mdi:qrcode-scan" class="text-lg text-primary" /> QRIS Barcode
-                  </h3>
-                  <p class="text-xs text-gray-500 mt-1">Scan otomatis pakai GoPay, OVO, Dana, LinkAja, ShopeePay</p>
-                </div>
-              </label>
-            </div>
-
-            <!-- Dynamic Payment Instructions Panel -->
-            <div class="mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-all">
-              <div v-if="form.payment_method === 'transfer'">
-                <p class="text-sm font-semibold text-text mb-2 flex items-center gap-1">
-                  <Icon icon="mdi:information-outline" class="text-primary text-lg" /> Rekening Pembayaran:
-                </p>
-                <ul class="text-xs text-gray-600 space-y-2">
-                  <li class="p-2.5 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
-                    <div>
-                      <span class="font-bold text-text">Bank BRI</span>
-                      <p class="mt-0.5 font-mono text-gray-500">0123-4567-8901</p>
-                    </div>
-                    <span class="text-gray-400 text-[10px]">A.N UDF Flamboyan</span>
-                  </li>
-                  <li class="p-2.5 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
-                    <div>
-                      <span class="font-bold text-text">Bank BNI</span>
-                      <p class="mt-0.5 font-mono text-gray-500">9876-5432-1098</p>
-                    </div>
-                    <span class="text-gray-400 text-[10px]">A.N UDF Flamboyan</span>
-                  </li>
-                </ul>
-                <p class="text-[11px] text-gray-400 mt-3">Silakan transfer sesuai nominal total. Bukti transfer di-upload setelah pesanan dibuat.</p>
-              </div>
-              <div v-else-if="form.payment_method === 'qris'" class="flex items-start gap-3">
-                <Icon icon="mdi:qrcode-scan" class="text-3xl text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p class="text-sm font-semibold text-text">QRIS Code Barcode</p>
-                  <p class="text-xs text-gray-500 mt-1">Barcode QRIS resmi akan ditampilkan di halaman rincian pesanan segera setelah Anda menekan tombol "Buat Pesanan". Anda cukup melakukan scan untuk melakukan pembayaran instan.</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

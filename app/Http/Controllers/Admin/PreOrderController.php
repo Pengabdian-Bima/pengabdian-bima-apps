@@ -90,6 +90,7 @@ class PreOrderController extends Controller
                     'product_name' => $item->product_name,
                     'qty'          => $item->qty,
                     'price'        => $item->price,
+                    'original_price' => $item->product ? $item->product->price : $item->price,
                     'weight'       => ($item->product && $item->product->weight > 0) ? $item->product->weight : 200,
                     'subtotal'     => $item->subtotal,
                 ]),
@@ -124,26 +125,46 @@ class PreOrderController extends Controller
 
     public function reject(Request $request, PreOrder $preOrder)
     {
-        if ($preOrder->status !== 'pending') {
-            return back()->withErrors(['status' => 'PO ini sudah tidak dalam status menunggu.']);
+        if (in_array($preOrder->status, ['completed', 'rejected', 'cancelled'])) {
+            return back()->withErrors(['status' => 'PO ini sudah selesai atau dibatalkan.']);
         }
 
         $request->validate([
-            'rejection_reason' => 'required|string|max:1000',
+            'rejection_reason' => 'nullable|string|max:1000',
         ]);
+
+        if ($preOrder->status === 'processing') {
+            foreach ($preOrder->items as $item) {
+                $product = $item->product;
+                if ($product) {
+                    $stockBefore = $product->stock;
+                    $product->increment('stock', $item->qty);
+                    \App\Models\StockHistory::create([
+                        'product_id'   => $product->id,
+                        'type'         => 'in',
+                        'quantity'     => $item->qty,
+                        'stock_before' => $stockBefore,
+                        'stock_after'  => $product->stock,
+                        'note'         => "Pre-Order Ditolak/Dibatalkan Admin #{$preOrder->po_code}",
+                    ]);
+                }
+            }
+        }
+
+        $reason = $request->rejection_reason ?? 'Dibatalkan oleh Admin';
 
         $preOrder->update([
             'status'           => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => $reason,
         ]);
 
         $this->fonnteService->sendCustomerStatusNotification(
             $preOrder,
             'DITOLAK',
-            "Alasan penolakan: {$request->rejection_reason}"
+            "Alasan penolakan/pembatalan: {$reason}"
         );
 
-        return back()->with('success', 'Pre-Order berhasil ditolak.');
+        return back()->with('success', 'Pre-Order berhasil dibatalkan.');
     }
 
     public function complete(PreOrder $preOrder)

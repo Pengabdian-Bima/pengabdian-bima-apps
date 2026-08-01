@@ -18,17 +18,57 @@ use App\Exports\ProductReportExport;
 
 class ReportController extends Controller
 {
+    private function getDateRange(Request $request): array
+    {
+        $startDate = null;
+        $endDate = null;
+        $tz = 'Asia/Makassar';
+
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            if ($request->filled('start_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date, $tz)->startOfDay()->setTimezone('UTC');
+            }
+            if ($request->filled('end_date')) {
+                $endDate = \Carbon\Carbon::parse($request->end_date, $tz)->endOfDay()->setTimezone('UTC');
+            }
+            return [$startDate, $endDate];
+        }
+
+        $period = $request->period ?? 'monthly';
+        switch ($period) {
+            case 'daily':
+                $startDate = \Carbon\Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfDay()->setTimezone('UTC');
+                break;
+            case 'weekly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfWeek()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfWeek()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'monthly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'yearly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfYear()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfYear()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'all':
+                $startDate = null;
+                $endDate = null;
+                break;
+            default:
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+        }
+
+        return [$startDate, $endDate];
+    }
+
     public function index(Request $request)
     {
         $period = $request->period ?? 'monthly';
-        $startDate = match ($period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            'all' => null,
-            default => now()->startOfMonth(),
-        };
+        [$startDate, $endDate] = $this->getDateRange($request);
 
         $completedOrders = Order::where('status', 'selesai');
         $completedPreOrders = PreOrder::where('status', 'completed');
@@ -36,20 +76,30 @@ class ReportController extends Controller
             $completedOrders->where('created_at', '>=', $startDate);
             $completedPreOrders->where('created_at', '>=', $startDate);
         }
+        if ($endDate) {
+            $completedOrders->where('created_at', '<=', $endDate);
+            $completedPreOrders->where('created_at', '<=', $endDate);
+        }
 
         $totalSales = (clone $completedOrders)->sum('total_amount') + (clone $completedPreOrders)->sum('total_amount');
         
-        $orderItemsQuery = OrderItem::whereHas('order', function($q) use ($startDate) {
+        $orderItemsQuery = OrderItem::whereHas('order', function($q) use ($startDate, $endDate) {
             $q->where('status', 'selesai');
             if ($startDate) {
                 $q->where('created_at', '>=', $startDate);
             }
+            if ($endDate) {
+                $q->where('created_at', '<=', $endDate);
+            }
         });
 
-        $preOrderItemsQuery = PreOrderItem::whereHas('preOrder', function($q) use ($startDate) {
+        $preOrderItemsQuery = PreOrderItem::whereHas('preOrder', function($q) use ($startDate, $endDate) {
             $q->where('status', 'completed');
             if ($startDate) {
                 $q->where('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $q->where('created_at', '<=', $endDate);
             }
         });
 
@@ -117,12 +167,24 @@ class ReportController extends Controller
             $salesDataOrdersQuery->where('created_at', '>=', $startDate);
             $salesDataPreOrdersQuery->where('created_at', '>=', $startDate);
         }
+        if ($endDate) {
+            $salesDataOrdersQuery->where('created_at', '<=', $endDate);
+            $salesDataPreOrdersQuery->where('created_at', '<=', $endDate);
+        }
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $dateExpr = 'DATE(created_at)';
+        if ($driver === 'mysql') {
+            $dateExpr = 'DATE(CONVERT_TZ(created_at, "+00:00", "+08:00"))';
+        } elseif ($driver === 'sqlite') {
+            $dateExpr = 'DATE(datetime(created_at, "+8 hours"))';
+        }
+
         $salesDataOrders = $salesDataOrdersQuery
-            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total, COUNT(*) as count')
+            ->selectRaw($dateExpr . ' as date, SUM(total_amount) as total, COUNT(*) as count')
             ->groupBy('date')->get();
 
         $salesDataPreOrders = $salesDataPreOrdersQuery
-            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total, COUNT(*) as count')
+            ->selectRaw($dateExpr . ' as date, SUM(total_amount) as total, COUNT(*) as count')
             ->groupBy('date')->get();
 
         $mergedSales = [];
@@ -158,7 +220,7 @@ class ReportController extends Controller
     public function productReport(Request $request)
     {
         $period = $request->period ?? 'monthly';
-        $reportData = $this->getProductReportData($period);
+        $reportData = $this->getProductReportData($request);
 
         return Inertia::render('Admin/Reports/Products', [
             'products' => $reportData['products'],
@@ -171,7 +233,7 @@ class ReportController extends Controller
     public function exportProductReportPdf(Request $request)
     {
         $period = $request->period ?? 'monthly';
-        $reportData = $this->getProductReportData($period);
+        $reportData = $this->getProductReportData($request);
 
         $pdf = Pdf::loadView('reports.product-report-pdf', [
             'products' => $reportData['products'],
@@ -192,20 +254,17 @@ class ReportController extends Controller
     public function exportPdf(Request $request)
     {
         $period = $request->period ?? 'monthly';
-        $startDate = match ($period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            'all' => null,
-            default => now()->startOfMonth(),
-        };
+        [$startDate, $endDate] = $this->getDateRange($request);
 
         $ordersQuery = Order::with(['items.product', 'user'])->where('status', 'selesai');
         $preOrdersQuery = PreOrder::with(['items.product', 'user'])->where('status', 'completed');
         if ($startDate) {
             $ordersQuery->where('created_at', '>=', $startDate);
             $preOrdersQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $ordersQuery->where('created_at', '<=', $endDate);
+            $preOrdersQuery->where('created_at', '<=', $endDate);
         }
         
         $orders = $ordersQuery->get();
@@ -238,22 +297,23 @@ class ReportController extends Controller
     public function exportBestSellingPdf(Request $request)
     {
         $period = $request->period ?? 'monthly';
-        $startDate = match ($period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            'all' => null,
-            default => now()->startOfMonth(),
-        };
+        [$startDate, $endDate] = $this->getDateRange($request);
 
-        $orderItems = OrderItem::whereHas('order', fn($q) => $q->where('status', 'selesai')->where('created_at', '>=', $startDate))
+        $orderItems = OrderItem::whereHas('order', function($q) use ($startDate, $endDate) {
+            $q->where('status', 'selesai');
+            if ($startDate) $q->where('created_at', '>=', $startDate);
+            if ($endDate) $q->where('created_at', '<=', $endDate);
+        })
             ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
             ->groupBy('product_id')
             ->with('product:id,name')
             ->get();
 
-        $preOrderItems = PreOrderItem::whereHas('preOrder', fn($q) => $q->where('status', 'completed')->where('created_at', '>=', $startDate))
+        $preOrderItems = PreOrderItem::whereHas('preOrder', function($q) use ($startDate, $endDate) {
+            $q->where('status', 'completed');
+            if ($startDate) $q->where('created_at', '>=', $startDate);
+            if ($endDate) $q->where('created_at', '<=', $endDate);
+        })
             ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
             ->groupBy('product_id')
             ->with('product:id,name')
@@ -293,42 +353,47 @@ class ReportController extends Controller
         return Excel::download(new BestSellingExport($period), 'produk-terlaris-' . now()->format('Y-m-d') . '.xlsx');
     }
 
-    private function getProductReportData($period)
+    private function getProductReportData(Request $request)
     {
-        $startDate = match ($period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            'all' => null,
-            default => now()->startOfMonth(),
+        $period = $request->period ?? 'monthly';
+        [$startDate, $endDate] = $this->getDateRange($request);
+
+        $tz = 'Asia/Makassar';
+        $periodLabel = match ($period) {
+            'daily' => 'Hari Ini (' . \Carbon\Carbon::now($tz)->format('d M Y') . ')',
+            'weekly' => 'Minggu Ini (' . \Carbon\Carbon::now($tz)->startOfWeek()->format('d M Y') . ' - ' . \Carbon\Carbon::now($tz)->endOfWeek()->format('d M Y') . ')',
+            'monthly' => 'Bulan Ini (' . \Carbon\Carbon::now($tz)->format('F Y') . ')',
+            'yearly' => 'Tahun Ini (' . \Carbon\Carbon::now($tz)->format('Y') . ')',
+            'all' => 'Semua Waktu',
+            default => 'Bulan Ini (' . \Carbon\Carbon::now($tz)->format('F Y') . ')',
         };
 
-        $periodLabel = match ($period) {
-            'daily' => 'Hari Ini (' . now()->format('d M Y') . ')',
-            'weekly' => 'Minggu Ini (' . now()->startOfWeek()->format('d M Y') . ' - ' . now()->endOfWeek()->format('d M Y') . ')',
-            'monthly' => 'Bulan Ini (' . now()->format('F Y') . ')',
-            'yearly' => 'Tahun Ini (' . now()->format('Y') . ')',
-            'all' => 'Semua Waktu',
-            default => 'Bulan Ini (' . now()->format('F Y') . ')',
-        };
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $periodLabel = 'Periode Custom (' . ($startDate ? $startDate->format('d M Y') : 'Awal') . ' - ' . ($endDate ? $endDate->format('d M Y') : 'Kini') . ')';
+        }
 
         $products = Product::with('category')->get();
 
-        $productData = $products->map(function ($p) use ($startDate) {
+        $productData = $products->map(function ($p) use ($startDate, $endDate) {
             $query = OrderItem::where('product_id', $p->id)
-                ->whereHas('order', function ($q) use ($startDate) {
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
                     $q->where('status', 'selesai');
                     if ($startDate) {
                         $q->where('created_at', '>=', $startDate);
                     }
+                    if ($endDate) {
+                        $q->where('created_at', '<=', $endDate);
+                    }
                 });
 
             $preOrderQuery = PreOrderItem::where('product_id', $p->id)
-                ->whereHas('preOrder', function ($q) use ($startDate) {
+                ->whereHas('preOrder', function ($q) use ($startDate, $endDate) {
                     $q->where('status', 'completed');
                     if ($startDate) {
                         $q->where('created_at', '>=', $startDate);
+                    }
+                    if ($endDate) {
+                        $q->where('created_at', '<=', $endDate);
                     }
                 });
 

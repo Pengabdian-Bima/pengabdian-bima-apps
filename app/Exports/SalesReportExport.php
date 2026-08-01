@@ -19,23 +19,51 @@ class SalesReportExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-        $startDate = match ($this->period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            default => now()->startOfMonth(),
-        };
+        $startDate = null;
+        $endDate = null;
 
-        $orders = Order::with(['user', 'items.product'])
-            ->where('status', 'selesai')
-            ->where('created_at', '>=', $startDate)
-            ->get();
+        $tz = 'Asia/Makassar';
+        switch ($this->period) {
+            case 'daily':
+                $startDate = \Carbon\Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfDay()->setTimezone('UTC');
+                break;
+            case 'weekly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfWeek()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfWeek()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'monthly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'yearly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfYear()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfYear()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'all':
+                $startDate = null;
+                $endDate = null;
+                break;
+            default:
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+        }
 
-        $preOrders = PreOrder::with(['user', 'items.product'])
-            ->where('status', 'completed')
-            ->where('created_at', '>=', $startDate)
-            ->get();
+        $ordersQuery = Order::with(['user', 'items.product'])->where('status', 'selesai');
+        $preOrdersQuery = PreOrder::with(['user', 'items.product'])->where('status', 'completed');
+
+        if ($startDate) {
+            $ordersQuery->where('created_at', '>=', $startDate);
+            $preOrdersQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $ordersQuery->where('created_at', '<=', $endDate);
+            $preOrdersQuery->where('created_at', '<=', $endDate);
+        }
+
+        $orders = $ordersQuery->get();
+        $preOrders = $preOrdersQuery->get();
 
         return $orders->concat($preOrders)->sortByDesc('created_at');
     }

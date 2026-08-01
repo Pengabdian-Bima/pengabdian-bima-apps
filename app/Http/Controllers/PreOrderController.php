@@ -171,6 +171,7 @@ class PreOrderController extends Controller
                     'product_name' => $item->product_name,
                     'qty'          => $item->qty,
                     'price'        => $item->price,
+                    'original_price' => $item->product ? $item->product->price : $item->price,
                     'weight'       => ($item->product && $item->product->weight > 0) ? $item->product->weight : 200,
                     'subtotal'     => $item->subtotal,
                 ]),
@@ -320,7 +321,7 @@ class PreOrderController extends Controller
     public function cancel(PreOrder $preOrder)
     {
         if ($preOrder->user_id !== auth()->id()) abort(403);
-        if (!in_array($preOrder->status, ['pending', 'accepted'])) {
+        if (!in_array($preOrder->status, ['pending', 'accepted', 'processing'])) {
             return back()->withErrors(['status' => 'PO tidak bisa dibatalkan pada status ini.']);
         }
 

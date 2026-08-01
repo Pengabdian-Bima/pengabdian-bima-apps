@@ -82,6 +82,10 @@
               </p>
             </div>
           </div>
+          <div v-else-if="product.discount_percent > 0" class="mt-4 p-3.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400 text-xs flex items-center gap-2">
+            <Icon icon="mdi:clock-alert-outline" class="text-gray-400 text-lg shrink-0" />
+            <span>Masa berlaku diskon untuk produk ini telah kadaluarsa / berakhir.</span>
+          </div>
 
           <div class="flex items-center gap-6 mt-4 text-sm text-gray-500 dark:text-gray-400">
             <span class="flex items-center gap-1"><Icon icon="mdi:weight" /> {{ product.weight }}g</span>

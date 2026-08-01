@@ -22,31 +22,59 @@ class ProductReportExport implements FromCollection, WithHeadings, WithMapping, 
 
     public function collection()
     {
-        $startDate = match ($this->period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            'all' => null,
-            default => now()->startOfMonth(),
-        };
+        $startDate = null;
+        $endDate = null;
+
+        $tz = 'Asia/Makassar';
+        switch ($this->period) {
+            case 'daily':
+                $startDate = \Carbon\Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfDay()->setTimezone('UTC');
+                break;
+            case 'weekly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfWeek()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfWeek()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'monthly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'yearly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfYear()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfYear()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'all':
+                $startDate = null;
+                $endDate = null;
+                break;
+            default:
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+        }
 
         $products = Product::with('category')->get();
 
-        return $products->map(function ($p) use ($startDate) {
+        return $products->map(function ($p) use ($startDate, $endDate) {
             $query = OrderItem::where('product_id', $p->id)
-                ->whereHas('order', function ($q) use ($startDate) {
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
                     $q->where('status', 'selesai');
                     if ($startDate) {
                         $q->where('created_at', '>=', $startDate);
                     }
+                    if ($endDate) {
+                        $q->where('created_at', '<=', $endDate);
+                    }
                 });
 
             $preOrderQuery = PreOrderItem::where('product_id', $p->id)
-                ->whereHas('preOrder', function ($q) use ($startDate) {
+                ->whereHas('preOrder', function ($q) use ($startDate, $endDate) {
                     $q->where('status', 'completed');
                     if ($startDate) {
                         $q->where('created_at', '>=', $startDate);
+                    }
+                    if ($endDate) {
+                        $q->where('created_at', '<=', $endDate);
                     }
                 });
 
