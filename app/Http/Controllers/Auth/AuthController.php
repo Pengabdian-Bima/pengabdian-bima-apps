@@ -47,18 +47,18 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'phone' => 'nullable|string|max:20',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             
             // Address validations
-            'label' => 'required|string|max:100',
-            'recipient_name' => 'required|string|max:255',
-            'address_phone' => 'required|string|max:20',
+            'label' => 'nullable|string|max:100',
+            'recipient_name' => 'nullable|string|max:255',
+            'address_phone' => 'nullable|string|max:20',
             'address' => 'required|string',
             'province' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
-            'city_id' => 'nullable|string|max:50',
+            'city_id' => 'nullable',
             'district' => 'nullable|string|max:255',
             'village' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:10',
@@ -74,9 +74,9 @@ class AuthController extends Controller
             ]);
 
             $user->addresses()->create([
-                'label' => $request->label,
-                'recipient_name' => $request->recipient_name,
-                'phone' => $request->address_phone,
+                'label' => $request->label ?: 'Rumah',
+                'recipient_name' => $request->recipient_name ?: $request->name,
+                'phone' => $request->address_phone ?: $request->phone,
                 'address' => $request->address,
                 'province' => $request->province,
                 'city' => $request->city,
@@ -88,6 +88,7 @@ class AuthController extends Controller
             ]);
 
             Auth::login($user);
+            $request->session()->regenerate();
         });
 
         return redirect()->route('home')->with('success', 'Registrasi berhasil! Selamat datang.');
