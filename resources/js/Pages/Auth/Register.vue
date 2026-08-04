@@ -11,6 +11,18 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-8 border border-gray-100">
+        
+        <!-- Global Validation Error Alert Banner -->
+        <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-start gap-3">
+          <Icon icon="mdi:alert-circle" class="text-xl shrink-0 mt-0.5 text-danger" />
+          <div>
+            <p class="font-bold mb-1">Gagal mendaftar. Harap periksa kembali input berikut:</p>
+            <ul class="list-disc list-inside space-y-1">
+              <li v-for="(err, key) in form.errors" :key="key">{{ err }}</li>
+            </ul>
+          </div>
+        </div>
+
         <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           <!-- Column 1: Account Info -->
@@ -40,7 +52,7 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
               <div class="relative">
-                <input v-model="form.password" :type="showPass ? 'text' : 'password'" required class="w-full px-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="Buat password">
+                <input v-model="form.password" :type="showPass ? 'text' : 'password'" required class="w-full px-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="Buat password (min. 8 karakter)">
                 <button type="button" @click="showPass = !showPass" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <Icon :icon="showPass ? 'mdi:eye-off' : 'mdi:eye'" class="text-lg" />
                 </button>
@@ -53,12 +65,8 @@
                   <span :class="rules.minLength ? 'text-success' : 'text-danger'">Minimal 8 karakter</span>
                 </div>
                 <div class="flex items-center gap-2 text-xs">
-                  <Icon :icon="rules.hasUppercase ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.hasUppercase ? 'text-success' : 'text-danger'" />
-                  <span :class="rules.hasUppercase ? 'text-success' : 'text-danger'">Minimal 1 huruf besar</span>
-                </div>
-                <div class="flex items-center gap-2 text-xs">
-                  <Icon :icon="rules.noSpaces ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.noSpaces ? 'text-success' : 'text-danger'" />
-                  <span :class="rules.noSpaces ? 'text-success' : 'text-danger'">Tidak boleh ada spasi</span>
+                  <Icon :icon="rules.hasUppercase ? 'mdi:check-circle' : 'mdi:close-circle'" :class="rules.hasUppercase ? 'text-success' : 'text-gray-400'" />
+                  <span :class="rules.hasUppercase ? 'text-success' : 'text-gray-500'">Menggunakan huruf besar (opsional)</span>
                 </div>
               </div>
             </div>
@@ -95,20 +103,20 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penerima *</label>
-                <input v-model="form.recipient_name" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penerima</label>
+                <input v-model="form.recipient_name" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" :placeholder="form.name || 'Nama penerima'">
                 <p v-if="form.errors.recipient_name" class="text-danger text-sm mt-1">{{ form.errors.recipient_name }}</p>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">No. HP Penerima *</label>
-                <input v-model="form.address_phone" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" placeholder="08xxxxxxxxxx">
+                <label class="block text-sm font-medium text-gray-700 mb-1">No. HP Penerima</label>
+                <input v-model="form.address_phone" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" :placeholder="form.phone || '08xxxxxxxxxx'">
                 <p v-if="form.errors.address_phone" class="text-danger text-sm mt-1">{{ form.errors.address_phone }}</p>
               </div>
 
               <!-- RajaOngkir Autocomplete Location Search -->
               <div class="col-span-2 relative">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cari Wilayah (Provinsi, Kota, Kecamatan, Kode Pos) *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cari Wilayah (Provinsi, Kota, Kecamatan, Kode Pos)</label>
                 <div class="relative">
                   <input 
                     type="text" 
@@ -116,9 +124,8 @@
                     @input="searchAddress" 
                     @focus="showDropdown = true"
                     @blur="handleBlur"
-                    required 
                     class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition" 
-                    placeholder="Masukkan wilayah (misal: Limboto, Kebon Jeruk)..."
+                    placeholder="Ketik wilayah (misal: Limboto, Gorontalo)..."
                     autocomplete="off"
                   >
                   <!-- Clear button -->
@@ -148,9 +155,6 @@
                     <Icon icon="mdi:loading" class="animate-spin text-primary" /> Mencari wilayah...
                   </span>
                 </div>
-                <p v-if="addressValidationError" class="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
-                  <Icon icon="mdi:alert-circle" /> Wilayah wajib dicari dan dipilih dari hasil pencarian.
-                </p>
               </div>
 
               <!-- Selected Address Breakdown (Read Only for verification) -->
@@ -172,9 +176,13 @@
 
           <!-- Submit Button spanning both columns -->
           <div class="col-span-1 md:col-span-2 pt-4 border-t border-gray-100 flex flex-col items-center">
-            <button type="submit" :disabled="form.processing || !canSubmit"
-              class="w-full max-w-md py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50">
-              <span v-if="form.processing">Memproses...</span>
+            <button 
+              type="submit" 
+              :disabled="form.processing"
+              class="w-full max-w-md py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Icon v-if="form.processing" icon="mdi:loading" class="animate-spin text-xl" />
+              <span v-if="form.processing">Memproses Registrasi...</span>
               <span v-else>Daftar Sekarang</span>
             </button>
             <p class="text-center text-sm text-gray-500 mt-4">Sudah punya akun? <Link href="/login" class="text-primary font-semibold hover:underline">Masuk</Link></p>
@@ -199,7 +207,6 @@ const addressSearchQuery = ref('');
 const searchResults = ref([]);
 const searching = ref(false);
 const showDropdown = ref(false);
-const addressValidationError = ref(false);
 let searchTimeout = null;
 
 const form = useForm({
@@ -261,16 +268,15 @@ function searchAddress() {
 }
 
 function selectLocation(result) {
-  form.province = result.province;
-  form.city = result.city;
-  form.city_id = result.city_id;
-  form.district = result.district;
-  form.village = result.village;
-  form.postal_code = result.postal_code;
+  form.province = result.province || '';
+  form.city = result.city || '';
+  form.city_id = result.city_id ? String(result.city_id) : '';
+  form.district = result.district || '';
+  form.village = result.village || '';
+  form.postal_code = result.postal_code || '';
   
   addressSearchQuery.value = result.label;
   showDropdown.value = false;
-  addressValidationError.value = false;
 }
 
 function clearAddressSelection() {
@@ -293,21 +299,26 @@ function handleBlur() {
 const rules = computed(() => ({
   minLength: form.password.length >= 8,
   hasUppercase: /[A-Z]/.test(form.password),
-  noSpaces: !/\s/.test(form.password),
 }));
 
-const isPasswordValid = computed(() => rules.value.minLength && rules.value.hasUppercase && rules.value.noSpaces);
 const passwordsMatch = computed(() => form.password === form.password_confirmation && form.password_confirmation.length > 0);
-const canSubmit = computed(() => isPasswordValid.value && passwordsMatch.value);
 
 function submit() {
-  if (!canSubmit.value) return;
-  
-  if (!form.city_id) {
-    addressValidationError.value = true;
-    return;
+  if (!form.recipient_name) {
+    form.recipient_name = form.name;
   }
-  
-  form.post('/register');
+  if (!form.address_phone) {
+    form.address_phone = form.phone;
+  }
+  if (!form.label) {
+    form.label = 'Rumah';
+  }
+
+  form.post('/register', {
+    preserveScroll: true,
+    onError: (errors) => {
+      console.error("Registrasi gagal:", errors);
+    }
+  });
 }
 </script>
