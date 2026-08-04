@@ -212,8 +212,7 @@ function toggleTheme() {
 
 const navItems = [
   { href: '/', label: 'Beranda' },
-  { href: '/produk', label: 'Produk' },
-  { href: '/artikel', label: 'Artikel' },
+  { href: '/produk', label: 'Produk' }, 
 ];
 
 function isActive(href) {
