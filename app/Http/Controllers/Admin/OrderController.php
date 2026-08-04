@@ -85,6 +85,7 @@ class OrderController extends Controller
                     'product_name' => $item->product->name,
                     'qty' => $item->qty,
                     'price' => $item->price,
+                    'original_price' => $item->product->price,
                     'subtotal' => $item->subtotal,
                 ]),
                 'payment' => $order->paymentConfirmation ? [

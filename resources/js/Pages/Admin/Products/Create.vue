@@ -26,7 +26,7 @@
             <!-- Checkbox Diskon Aktif -->
             <div class="flex items-center gap-2">
               <input v-model="form.is_discount_active" type="checkbox" id="is_discount_active" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
-              <label for="is_discount_active" class="text-sm font-medium text-gray-700">Aktif</label>
+              <label for="is_discount_active" class="text-sm font-medium text-gray-700">Aktifkan Diskon</label>
             </div>
           </div>
 
@@ -57,7 +57,7 @@
         </div>
 
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label><textarea v-model="form.description" rows="4" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"></textarea></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">Foto Utama</label><input type="file" @change="form.thumbnail = $event.target.files[0]" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk</label><input type="file" @change="form.thumbnail = $event.target.files[0]" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"></div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Galeri Foto</label><input type="file" @change="handleGallery" accept="image/*" multiple class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"></div>
         <button type="submit" :disabled="form.processing" class="px-8 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer">{{ form.processing ? 'Menyimpan...' : 'Simpan Produk' }}</button>
       </form>

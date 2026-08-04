@@ -54,7 +54,7 @@
     </section>
 
     <!-- Keunggulan -->
-    <section id="keunggulan" class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
+<!--     <section id="keunggulan" class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
           <h2 class="text-3xl font-bold text-text dark:text-white">Keunggulan Produk Kami</h2>
@@ -70,7 +70,7 @@
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- Produk Unggulan -->
     <section class="py-20 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
@@ -124,8 +124,8 @@
       </div>
     </section>
 
-    <!-- Ulasan / Testimoni Pelanggan -->
-    <section class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
+    <!-- Ulasan / Testimoni Pelanggan (Hanya Tampil Jika Ada Ulasan) -->
+    <section v-if="reviews && reviews.length > 0" class="py-20 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
           <h2 class="text-3xl font-bold text-text dark:text-white">Ulasan Pembeli</h2>
@@ -133,7 +133,7 @@
         </div>
 
         <!-- Grid Ulasan Dinamis (Database-driven) -->
-        <div v-if="reviews && reviews.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div v-for="review in reviews" :key="review.id" class="p-6 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between gap-2 mb-3">
@@ -157,13 +157,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Tampilan Kosong jika Belum Ada Ulasan -->
-        <div v-else class="text-center py-16 border border-dashed border-gray-200 dark:border-gray-700 rounded-3xl max-w-md mx-auto">
-          <Icon icon="mdi:star-outline" class="text-gray-300 text-5xl mx-auto mb-3" />
-          <h3 class="text-base font-bold text-text dark:text-white">Belum Ada Ulasan</h3>
-          <p class="text-xs text-gray-400 mt-1 px-4">Jadilah pembeli pertama yang memberikan ulasan setelah menyelesaikan pesanan Anda!</p>
         </div>
       </div>
     </section>

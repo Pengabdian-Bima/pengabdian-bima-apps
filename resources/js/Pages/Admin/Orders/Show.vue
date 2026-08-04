@@ -77,14 +77,6 @@
           <h2 class="font-semibold text-text mb-4 flex items-center gap-1.5">
             <Icon icon="mdi:credit-card-outline" class="text-primary text-xl" /> Info Pembayaran
           </h2>
-          
-          <div class="mb-4 pb-4 border-b border-gray-50 text-sm">
-            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Metode Pilihan</span>
-            <span class="font-semibold text-text mt-1 flex items-center gap-1.5">
-              <Icon :icon="order.payment_method === 'qris' ? 'mdi:qrcode-scan' : 'mdi:bank'" class="text-primary text-lg" />
-              {{ order.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank Manual' }}
-            </span>
-          </div>
 
           <div v-if="order.payment" class="space-y-2 text-sm">
             <div class="flex justify-between"><span class="text-gray-500">Pengirim:</span><span class="font-medium text-text">{{ order.payment.sender_name }}</span></div>
@@ -110,7 +102,7 @@
             <button v-if="['menunggu_pembayaran', 'menunggu_verifikasi'].includes(order.status)" @click="openRejectionModal" class="w-full py-2 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition cursor-pointer">✗ Tolak Pembayaran</button>
             <button v-if="order.status === 'diproses'" @click="updateStatus('dikirim')" class="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition cursor-pointer">📦 Tandai Dikirim</button>
             <button v-if="order.status === 'dikirim'" @click="updateStatus('selesai')" class="w-full py-2 bg-success text-white text-sm font-semibold rounded-xl hover:bg-green-600 transition cursor-pointer">✓ Tandai Selesai</button>
-            <button v-if="['menunggu_pembayaran','menunggu_verifikasi'].includes(order.status)" @click="updateStatus('dibatalkan')" class="w-full py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition cursor-pointer">Batalkan</button>
+            <button v-if="['menunggu_pembayaran','menunggu_verifikasi','diproses'].includes(order.status)" @click="showCancelModal = true" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"><Icon icon="mdi:close-circle" /> Batalkan Pesanan</button>
           </div>
         </div>
 
@@ -207,7 +199,12 @@
                     <tr v-for="(item, idx) in order.items" :key="idx">
                       <td class="py-1">
                         <div>{{ item.product_name }}</div>
-                        <div class="text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</div>
+                        <div class="text-gray-500">
+                          {{ item.qty }} x Rp {{ fmt(item.price) }}
+                          <span v-if="Number(item.original_price || item.price) > Number(item.price)" class="text-[9px] text-red-600 font-bold ml-1">
+                            (Diskon -Rp {{ fmt(Number(item.original_price) - Number(item.price)) }})
+                          </span>
+                        </div>
                       </td>
                       <td class="text-right py-1 font-semibold align-bottom">Rp {{ fmt(item.subtotal) }}</td>
                     </tr>
@@ -217,8 +214,13 @@
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
 
                 <div class="space-y-1 text-[10px]">
+                  <div class="flex justify-between"><span>Subtotal Produk:</span><span>Rp {{ fmt(order.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) * item.qty), 0)) }}</span></div>
+                  <div v-if="order.items.some(item => Number(item.original_price || item.price) > Number(item.price))" class="flex justify-between text-red-600 font-semibold">
+                    <span>Total Diskon:</span>
+                    <span>-Rp {{ fmt(order.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) - Number(item.price)) * item.qty, 0)) }}</span>
+                  </div>
+                  <div v-if="order.shipping_cost" class="flex justify-between"><span>Ongkir ({{ order.courier }}):</span><span>Rp {{ fmt(order.shipping_cost) }}</span></div>
                   <div class="flex justify-between font-bold"><span>Total Belanja:</span><span>Rp {{ fmt(order.total_amount) }}</span></div>
-                  <div class="flex justify-between"><span>Metode Bayar:</span><span class="uppercase font-semibold">{{ order.payment_method }}</span></div>
                 </div>
 
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
@@ -243,6 +245,30 @@
         </Transition>
       </div>
     </Transition>
+
+    <!-- Modal Konfirmasi Pembatalan Pesanan Admin -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showCancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showCancelModal = false">
+        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+              <Icon icon="mdi:alert-circle-outline" class="text-3xl" />
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">Konfirmasi Pembatalan Pesanan</h3>
+            <p class="text-xs text-gray-500 mt-2">
+              Apakah Anda yakin ingin membatalkan pesanan <strong class="text-gray-800">#{{ order.order_code }}</strong> ini? Stok produk akan otomatis dikembalikan.
+            </p>
+            <div class="flex gap-3 mt-6">
+              <button @click="showCancelModal = false" class="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer">Batal</button>
+              <button @click="confirmCancelOrder" :disabled="cancelLoading" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-red-500/20 cursor-pointer flex items-center justify-center gap-1.5">
+                <Icon v-if="cancelLoading" icon="mdi:loading" class="animate-spin" />
+                {{ cancelLoading ? 'Memproses...' : 'Ya, Batalkan' }}
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
   </AdminLayout>
 </template>
 
@@ -257,7 +283,17 @@ const page = usePage();
 const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 const showRejectionModal = ref(false);
 const showReceiptModal = ref(false);
+const showCancelModal = ref(false);
+const cancelLoading = ref(false);
 const rejectionReason = ref('');
+
+function confirmCancelOrder() {
+  cancelLoading.value = true;
+  router.put(`/admin/orders/${props.order.id}/status`, { status: 'dibatalkan' }, {
+    onSuccess: () => { showCancelModal.value = false; },
+    onFinish: () => { cancelLoading.value = false; }
+  });
+}
 
 const whatsappCustomerUrl = computed(() => {
   let phone = props.order.shipping_phone || '';
@@ -294,27 +330,64 @@ function submitRejection() {
 }
 
 function printOrderReceipt() {
-  const printContent = document.getElementById('order-receipt-print-area').innerHTML;
+  const printElement = document.getElementById('order-receipt-print-area');
+  if (!printElement) return;
+
   const printWindow = window.open('', '_blank', 'width=380,height=600');
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
       <head>
         <title>Struk - ${props.order.order_code}</title>
         <style>
-          body { font-family: 'Courier New', Courier, monospace; font-size: 12px; padding: 10px; margin: 0; width: 300px; line-height: 1.3; }
-          img { max-width: 120px; height: auto; display: block; margin: 0 auto 8px auto; object-fit: contain; border-radius: 6px; }
+          @page { size: auto; margin: 0mm; }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            padding: 15px;
+            margin: 0;
+            width: 280px;
+            box-sizing: border-box;
+            line-height: 1.3;
+          }
+          img {
+            max-width: 90px;
+            height: auto;
+            display: block;
+            margin: 0 auto 6px auto;
+          }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; }
-          td { padding: 2px 0; vertical-align: top; }
+          .font-bold, .bold { font-weight: bold; }
+          .font-semibold { font-weight: 600; }
+          .uppercase { text-transform: uppercase; }
+          .my-2 { margin-top: 8px; margin-bottom: 8px; }
+          .mb-2 { margin-bottom: 8px; }
+          .mt-0.5 { margin-top: 2px; }
+          .mt-1 { margin-top: 4px; }
+          .py-1 { padding-top: 4px; padding-bottom: 4px; }
+          .space-y-1 > * + * { margin-top: 4px; }
+          .space-y-4 > * + * { margin-top: 12px; }
+          .border-t { border-top: 1px dashed #000 !important; }
+          .border-dashed { border-style: dashed !important; }
+          .border-gray-300 { border-color: #000 !important; }
+          .flex { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+          .justify-between { justify-content: space-between !important; }
+          .justify-center { justify-content: center !important; }
+          table { width: 100% !important; border-collapse: collapse !important; margin: 4px 0 !important; }
+          td, th { padding: 3px 0 !important; vertical-align: top !important; font-size: 11px !important; }
+          .align-bottom { vertical-align: bottom !important; }
+          .text-primary { color: #000 !important; }
+          .text-gray-500, .text-gray-400 { color: #444 !important; }
         </style>
       </head>
-      <body>${printContent}</body>
+      <body>${printElement.innerHTML}</body>
     </html>
   `);
   printWindow.document.close();
-  setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
+  printWindow.focus();
+  setTimeout(() => { printWindow.print(); printWindow.close(); }, 350);
 }
 </script>

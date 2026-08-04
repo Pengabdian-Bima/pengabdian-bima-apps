@@ -166,21 +166,29 @@
               <Icon icon="mdi:truck-outline" class="text-orange-500" /> Sedang Diproses
             </h2>
             <p class="text-xs text-orange-700 mb-2">
-              Ekspedisi: <strong>{{ preOrder.courier }} - {{ preOrder.courier_service }}</strong><br/>
-              Metode Bayar: <strong class="uppercase">{{ preOrder.payment_method }}</strong>
+              Ekspedisi: <strong>{{ preOrder.courier }} - {{ preOrder.courier_service }}</strong>
             </p>
             <p class="text-xs text-orange-600">Konfirmasi bukti pembayaran dikirim langsung oleh pembeli via WhatsApp. Harap verifikasi lalu tandai PO selesai.</p>
           </div>
 
-          <!-- Complete button -->
-          <div class="bg-white rounded-2xl border border-gray-100 p-5">
+          <!-- Complete button & Cancel button -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-2">
             <button @click="showCompleteModal = true" :disabled="completeLoading"
               class="w-full py-3 bg-success text-white font-semibold text-sm rounded-xl hover:bg-green-600 transition shadow-md shadow-green-100 flex items-center justify-center gap-2 cursor-pointer">
               <Icon v-if="completeLoading" icon="mdi:loading" class="animate-spin" />
               <Icon v-else icon="mdi:check-decagram-outline" />
               {{ completeLoading ? 'Memproses...' : 'Tandai PO Selesai' }}
             </button>
+            <button @click="openRejectModal" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <Icon icon="mdi:close-circle" /> Batalkan / Tolak Pre-Order
+            </button>
           </div>
+        </div>
+
+        <div v-if="['accepted'].includes(preOrder.status)" class="bg-white rounded-2xl border border-gray-100 p-5">
+          <button @click="openRejectModal" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <Icon icon="mdi:close-circle" /> Batalkan / Tolak Pre-Order
+          </button>
         </div>
 
         <!-- Completed Info -->
@@ -269,7 +277,12 @@
                     <tr v-for="(item, idx) in preOrder.items" :key="idx">
                       <td class="py-1">
                         <div>{{ item.product_name }}</div>
-                        <div class="text-gray-500">{{ item.qty }} x Rp {{ fmt(item.price) }}</div>
+                        <div class="text-gray-500">
+                          {{ item.qty }} x Rp {{ fmt(item.price) }}
+                          <span v-if="Number(item.original_price || item.price) > Number(item.price)" class="text-[9px] text-red-600 font-bold ml-1">
+                            (Diskon -Rp {{ fmt(Number(item.original_price) - Number(item.price)) }})
+                          </span>
+                        </div>
                       </td>
                       <td class="text-right py-1 font-semibold align-bottom">Rp {{ fmt(item.subtotal) }}</td>
                     </tr>
@@ -279,10 +292,13 @@
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
 
                 <div class="space-y-1 text-[10px]">
-                  <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ fmt(preOrder.total_amount - (preOrder.shipping_cost || 0)) }}</span></div>
+                  <div class="flex justify-between"><span>Subtotal Produk:</span><span>Rp {{ fmt(preOrder.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) * item.qty), 0)) }}</span></div>
+                  <div v-if="preOrder.items.some(item => Number(item.original_price || item.price) > Number(item.price))" class="flex justify-between text-red-600 font-semibold">
+                    <span>Total Diskon:</span>
+                    <span>-Rp {{ fmt(preOrder.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) - Number(item.price)) * item.qty, 0)) }}</span>
+                  </div>
                   <div v-if="preOrder.shipping_cost" class="flex justify-between"><span>Ongkir:</span><span>Rp {{ fmt(preOrder.shipping_cost) }}</span></div>
                   <div class="flex justify-between font-bold"><span>Total Bayar:</span><span>Rp {{ fmt(preOrder.total_amount) }}</span></div>
-                  <div class="flex justify-between"><span>Metode Bayar:</span><span class="uppercase font-semibold">{{ preOrder.payment_method }}</span></div>
                 </div>
 
                 <div class="border-t border-dashed border-gray-300 my-2"></div>
@@ -312,8 +328,8 @@
       <div v-if="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showRejectModal = false">
         <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100">
           <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-2">Alasan Penolakan</h3>
-            <p class="text-xs text-gray-500 mb-4">Tuliskan alasan penolakan Pre-Order ini. Alasan ini akan ditampilkan kepada pelanggan.</p>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Konfirmasi Pembatalan / Penolakan Pre-Order</h3>
+            <p class="text-xs text-gray-500 mb-4">Silakan berikan alasan pembatalan Pre-Order <strong>#{{ preOrder.po_code }}</strong> ini agar dapat diketahui pelanggan.</p>
             <textarea v-model="rejectionReason" rows="4"
               placeholder="Contoh: Stok bahan tidak mencukupi saat ini / Kapasitas produksi sedang penuh / dll."
               class="w-full p-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none mb-4"></textarea>
@@ -381,6 +397,11 @@ function acceptPO() {
   });
 }
 
+function openRejectModal() {
+  rejectionReason.value = '';
+  showRejectModal.value = true;
+}
+
 function rejectPO() {
   if (!rejectionReason.value.trim()) return;
   rejectLoading.value = true;
@@ -399,27 +420,64 @@ function confirmComplete() {
 }
 
 function printPOReceipt() {
-  const printContent = document.getElementById('po-receipt-print-area').innerHTML;
+  const printElement = document.getElementById('po-receipt-print-area');
+  if (!printElement) return;
+
   const printWindow = window.open('', '_blank', 'width=380,height=600');
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
       <head>
         <title>Struk PO - ${props.preOrder.po_code}</title>
         <style>
-          body { font-family: 'Courier New', Courier, monospace; font-size: 12px; padding: 10px; margin: 0; width: 300px; line-height: 1.3; }
-          img { max-width: 120px; height: auto; display: block; margin: 0 auto 8px auto; object-fit: contain; border-radius: 6px; }
+          @page { size: auto; margin: 0mm; }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            padding: 15px;
+            margin: 0;
+            width: 280px;
+            box-sizing: border-box;
+            line-height: 1.3;
+          }
+          img {
+            max-width: 90px;
+            height: auto;
+            display: block;
+            margin: 0 auto 6px auto;
+          }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; }
-          td { padding: 2px 0; vertical-align: top; }
+          .font-bold, .bold { font-weight: bold; }
+          .font-semibold { font-weight: 600; }
+          .uppercase { text-transform: uppercase; }
+          .my-2 { margin-top: 8px; margin-bottom: 8px; }
+          .mb-2 { margin-bottom: 8px; }
+          .mt-0.5 { margin-top: 2px; }
+          .mt-1 { margin-top: 4px; }
+          .py-1 { padding-top: 4px; padding-bottom: 4px; }
+          .space-y-1 > * + * { margin-top: 4px; }
+          .space-y-4 > * + * { margin-top: 12px; }
+          .border-t { border-top: 1px dashed #000 !important; }
+          .border-dashed { border-style: dashed !important; }
+          .border-gray-300 { border-color: #000 !important; }
+          .flex { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+          .justify-between { justify-content: space-between !important; }
+          .justify-center { justify-content: center !important; }
+          table { width: 100% !important; border-collapse: collapse !important; margin: 4px 0 !important; }
+          td, th { padding: 3px 0 !important; vertical-align: top !important; font-size: 11px !important; }
+          .align-bottom { vertical-align: bottom !important; }
+          .text-primary { color: #000 !important; }
+          .text-gray-500, .text-gray-400 { color: #444 !important; }
         </style>
       </head>
-      <body>${printContent}</body>
+      <body>${printElement.innerHTML}</body>
     </html>
   `);
   printWindow.document.close();
-  setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
+  printWindow.focus();
+  setTimeout(() => { printWindow.print(); printWindow.close(); }, 350);
 }
 </script>

@@ -133,7 +133,7 @@ class Product extends Model
             return null;
         }
 
-        return $this->discount_end_at->translatedFormat('d F Y H:i') . ' WITA';
+        return $this->discount_end_at->locale('id')->translatedFormat('d F Y H:i') . ' WITA';
     }
 
     public function reviews()

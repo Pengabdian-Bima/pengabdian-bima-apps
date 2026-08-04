@@ -58,7 +58,14 @@
                 <h3 class="font-bold text-gray-800 text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">{{ product.name }}</h3>
               </div>
               <div class="mt-3 flex items-center justify-between">
-                <span class="text-primary font-extrabold text-sm">Rp {{ formatPrice(product.price) }}</span>
+                <div>
+                  <div v-if="product.is_discount_active" class="flex items-center gap-1.5">
+                    <span class="text-primary font-extrabold text-sm">Rp {{ formatPrice(product.final_price) }}</span>
+                    <span class="px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-md">-{{ product.discount_percent }}%</span>
+                  </div>
+                  <div v-if="product.is_discount_active" class="text-[11px] line-through text-gray-400">Rp {{ formatPrice(product.price) }}</div>
+                  <span v-else class="text-primary font-extrabold text-sm">Rp {{ formatPrice(product.price) }}</span>
+                </div>
                 <span class="p-1.5 bg-primary/10 rounded-lg text-primary hover:bg-primary hover:text-white transition-all shrink-0">
                   <Icon icon="mdi:plus" class="text-base" />
                 </span>
@@ -95,7 +102,11 @@
               </div>
               <div class="flex-1 min-w-0">
                 <h4 class="font-bold text-gray-800 text-xs truncate">{{ item.name }}</h4>
-                <p class="text-xs text-primary font-semibold mt-0.5">Rp {{ formatPrice(item.price) }}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-xs text-primary font-bold">Rp {{ formatPrice(item.price) }}</span>
+                  <span v-if="item.is_discount_active" class="text-[10px] line-through text-gray-400">Rp {{ formatPrice(item.original_price) }}</span>
+                  <span v-if="item.is_discount_active" class="text-[9px] font-bold text-red-600 bg-red-50 px-1 rounded">-{{ item.discount_percent }}%</span>
+                </div>
                 <div class="flex items-center justify-between mt-2">
                   <!-- Qty Adjuster -->
                   <div class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden h-7">
@@ -148,90 +159,76 @@
             <!-- Billing Details -->
             <div class="space-y-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
               <div class="flex justify-between text-xs text-gray-500">
-                <span>Total Belanja</span>
-                <span class="font-semibold text-gray-800">Rp {{ formatPrice(totalAmount) }}</span>
-              </div>
-              <div class="flex justify-between text-base font-bold text-gray-900 pt-1">
-                <span>Total Bayar</span>
-                <span class="text-primary font-black">Rp {{ formatPrice(totalAmount) }}</span>
+                <span>Total Belanja:</span>
+                <span class="font-bold text-gray-900 text-sm">Rp {{ formatPrice(totalAmount) }}</span>
               </div>
 
-              <!-- Payment Inputs -->
-              <div class="pt-3 border-t border-gray-200/60 mt-2 space-y-3">
-                <div>
-                  <label class="block text-xs font-semibold text-gray-500 mb-1">Uang Diterima (Tunai) *</label>
-                  <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">Rp</span>
-                    <input 
-                      v-model.number="cashReceived" 
-                      type="number" 
-                      placeholder="Masukkan jumlah uang" 
-                      class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-xs font-bold"
-                    />
-                  </div>
+              <!-- Fast Cash Options -->
+              <div class="pt-2 border-t border-gray-200/60">
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5">Uang Diterima *</label>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-bold text-gray-400">Rp</span>
+                  <input 
+                    v-model.number="cashReceived" 
+                    type="number" 
+                    min="0" 
+                    step="1000" 
+                    class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                  />
                 </div>
-
-                <!-- Fast cash buttons -->
-                <div class="flex flex-wrap gap-1.5">
+                <div class="grid grid-cols-5 gap-1">
                   <button 
-                    v-for="cash in fastCashOptions" 
-                    :key="cash" 
-                    type="button"
-                    @click="setCashReceived(cash)"
-                    class="px-2 py-1 bg-white border border-gray-200 hover:border-primary hover:bg-primary/5 text-[10px] font-bold text-gray-600 rounded-lg transition"
+                    v-for="opt in fastCashOptions" 
+                    :key="opt" 
+                    @click="setCashReceived(opt)"
+                    class="py-1 bg-white border border-gray-200 hover:border-primary hover:text-primary text-[10px] font-semibold text-gray-600 rounded-lg transition"
                   >
-                    Rp {{ formatPrice(cash) }}
-                  </button>
-                  <button 
-                    type="button"
-                    @click="setCashReceived(totalAmount)"
-                    class="px-2 py-1 bg-primary/10 border border-primary/20 hover:bg-primary hover:text-white text-[10px] font-bold text-primary rounded-lg transition"
-                  >
-                    Uang Pas
+                    {{ opt / 1000 }}rb
                   </button>
                 </div>
+              </div>
 
-                <!-- Kembalian -->
-                <div class="flex justify-between text-xs pt-1">
-                  <span class="text-gray-500">Kembalian</span>
-                  <span :class="['font-extrabold text-sm', changeAmount >= 0 ? 'text-green-600' : 'text-red-500']">
-                    {{ changeAmount >= 0 ? 'Rp ' + formatPrice(changeAmount) : 'Kurang Rp ' + formatPrice(Math.abs(changeAmount)) }}
-                  </span>
-                </div>
+              <!-- Change calculation -->
+              <div class="pt-2 border-t border-gray-200/60 flex justify-between text-xs">
+                <span class="font-semibold text-gray-700">Kembalian:</span>
+                <span :class="['font-extrabold', changeAmount >= 0 ? 'text-green-600' : 'text-red-500']">
+                  Rp {{ formatPrice(changeAmount) }}
+                </span>
               </div>
             </div>
 
             <!-- Submit Button -->
             <button 
               @click="triggerConfirm" 
-              :disabled="cart.length === 0 || !customerName || cashReceived < totalAmount || processing"
-              class="w-full py-3 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+              :disabled="cart.length === 0 || cashReceived < totalAmount || processing"
+              class="w-full py-3.5 bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-sm rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Icon v-if="processing" icon="mdi:loading" class="animate-spin" />
-              <Icon v-else icon="mdi:check-circle-outline" />
-              {{ processing ? 'Memproses...' : 'Proses Transaksi (Bayar Tunai)' }}
+              <Icon v-if="processing" icon="mdi:loading" class="animate-spin text-lg" />
+              <Icon v-else icon="mdi:cash-register" class="text-lg" />
+              {{ processing ? 'Memproses...' : 'Proses Bayar Tunai' }}
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Receipt Modal / Printable Receipt -->
-    <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="showReceiptModal && receiptData" class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transition-all">
-          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="font-bold text-gray-900">Transaksi Berhasil</h3>
+    <!-- RECEIPT MODAL -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="showReceiptModal && receiptData" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden text-gray-900">
+          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="font-bold flex items-center gap-2">
+              <Icon icon="mdi:check-circle" class="text-success text-xl" /> Struk Pembayaran
+            </h3>
             <button @click="closeReceiptModal" class="p-1 rounded-lg text-gray-400 hover:bg-gray-100 transition">
               <Icon icon="mdi:close" class="text-xl" />
             </button>
           </div>
-          
-          <div class="p-6">
-            <!-- Thermal Receipt Design -->
+
+          <div class="p-5 max-h-[75vh] overflow-y-auto">
+            <!-- Receipt Printable Content -->
             <div id="receipt-print-area" class="bg-gray-50 border border-gray-200 rounded-2xl p-5 font-mono text-xs text-gray-800 space-y-4">
               <div class="text-center">
-                <!-- Receipt Logo -->
                 <div class="flex justify-center mb-2">
                   <img src="/img/logo-brand.jpeg" alt="Logo Brand" class="h-12 w-auto object-contain rounded-md mx-auto" />
                 </div>
@@ -256,7 +253,10 @@
                   <tr v-for="(item, idx) in receiptData.items" :key="idx">
                     <td class="py-1">
                       <div>{{ item.name }}</div>
-                      <div class="text-gray-500">{{ item.qty }} x Rp {{ formatPrice(item.price) }}</div>
+                      <div class="text-gray-500">
+                        {{ item.qty }} x Rp {{ formatPrice(item.price) }}
+                        <span v-if="item.is_discount_active" class="text-[9px] text-red-600 font-bold ml-1">(-{{ item.discount_percent }}%)</span>
+                      </div>
                     </td>
                     <td class="text-right py-1 font-semibold align-bottom">Rp {{ formatPrice(item.subtotal) }}</td>
                   </tr>
@@ -266,6 +266,11 @@
               <div class="border-t border-dashed border-gray-300 my-2"></div>
 
               <div class="space-y-1 text-[10px]">
+                <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ formatPrice(receiptData.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) * item.qty), 0)) }}</span></div>
+                <div v-if="receiptData.items.some(item => Number(item.original_price || item.price) > Number(item.price))" class="flex justify-between text-red-600 font-semibold">
+                  <span>Total Diskon:</span>
+                  <span>-Rp {{ formatPrice(receiptData.items.reduce((sum, item) => sum + (Number(item.original_price || item.price) - Number(item.price)) * item.qty, 0)) }}</span>
+                </div>
                 <div class="flex justify-between font-bold"><span>Total Belanja:</span><span>Rp {{ formatPrice(receiptData.total_amount) }}</span></div>
                 <div class="flex justify-between"><span>Bayar Tunai:</span><span>Rp {{ formatPrice(receiptData.cash_received) }}</span></div>
                 <div class="flex justify-between font-bold text-primary"><span>Kembalian:</span><span>Rp {{ formatPrice(receiptData.change) }}</span></div>
@@ -283,13 +288,13 @@
             <div class="grid grid-cols-2 gap-3 mt-6">
               <button 
                 @click="printReceipt" 
-                class="py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
+                class="py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
                 <Icon icon="mdi:printer" /> Cetak Struk
               </button>
               <button 
                 @click="closeReceiptModal" 
-                class="py-2.5 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition hover:shadow-lg hover:shadow-primary/20"
+                class="py-2.5 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition hover:shadow-lg hover:shadow-primary/20 cursor-pointer"
               >
                 <Icon icon="mdi:refresh" /> Transaksi Baru
               </button>
@@ -351,16 +356,17 @@ const fastCashOptions = [10000, 20000, 50000, 100000, 200000];
 
 // Filter products based on search query
 const filteredProducts = computed(() => {
-  if (!searchQuery.value.trim()) return props.products;
-  return props.products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  if (!searchQuery.value) return props.products || [];
+  const query = searchQuery.value.toLowerCase();
+  return (props.products || []).filter(p => p.name.toLowerCase().includes(query));
 });
 
 // Add a product to cashier cart
 function addToCart(product) {
   if (product.stock === 0) return;
   
+  const effectivePrice = product.is_discount_active ? product.final_price : product.price;
+
   const existingIdx = cart.value.findIndex(item => item.id === product.id);
   if (existingIdx !== -1) {
     if (cart.value[existingIdx].qty < product.stock) {
@@ -372,7 +378,10 @@ function addToCart(product) {
     cart.value.push({
       id: product.id,
       name: product.name,
-      price: product.price,
+      original_price: product.price,
+      price: effectivePrice,
+      is_discount_active: product.is_discount_active,
+      discount_percent: product.discount_percent,
       stock: product.stock,
       thumbnail_url: product.thumbnail_url,
       qty: 1,
@@ -463,7 +472,6 @@ function submitTransaction() {
   router.post('/admin/cashier', payload, {
     onSuccess: () => {
       processing.value = false;
-      // The receipt is passed through flash message, which will trigger the receipt modal.
     },
     onError: (errors) => {
       processing.value = false;
@@ -480,7 +488,6 @@ function submitTransaction() {
 const showReceiptModal = ref(false);
 const receiptData = computed(() => page.props.flash?.receipt);
 
-// Watch for receiptData flash message to open modal
 watch(receiptData, (newReceipt) => {
   if (newReceipt) {
     showReceiptModal.value = true;
@@ -489,61 +496,62 @@ watch(receiptData, (newReceipt) => {
 
 function closeReceiptModal() {
   showReceiptModal.value = false;
-  // Clear the cart & reset fields for the next transaction
-  clearCart();
+  cart.value = [];
   customerName.value = 'Pelanggan Umum';
   customerPhone.value = '';
   cashReceived.value = 0;
-  // Clear the flash session manually via route reload or by ignoring
-  router.get('/admin/cashier', {}, { replace: true, preserveState: false });
 }
 
 function printReceipt() {
-  const printContent = document.getElementById('receipt-print-area').innerHTML;
+  const printElement = document.getElementById('receipt-print-area');
+  if (!printElement) return;
+
   const printWindow = window.open('', '_blank', 'width=380,height=600');
-  
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
       <head>
         <title>Struk Pembayaran - UD Flamboyan</title>
         <style>
+          @page { size: auto; margin: 0mm; }
           body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            padding: 10px;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            padding: 15px;
             margin: 0;
-            width: 300px;
+            width: 280px;
+            box-sizing: border-box;
             line-height: 1.3;
           }
           img {
-            max-width: 120px;
+            max-width: 100px;
             height: auto;
             display: block;
-            margin: 0 auto 8px auto;
-            object-fit: contain;
-            border-radius: 6px;
+            margin: 0 auto 6px auto;
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; }
-          td { padding: 2px 0; vertical-align: top; }
-          .footer { margin-top: 15px; text-align: center; font-size: 10px; }
+          .font-bold, .bold { font-weight: bold; }
+          .uppercase { text-transform: uppercase; }
+          .border-t { border-top: 1px dashed #000; margin: 8px 0; }
+          table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+          td, th { padding: 2px 0; vertical-align: top; font-size: 11px; }
+          .flex { display: flex; justify-content: space-between; }
         </style>
       </head>
       <body>
-        ${printContent}
-        <script>
-          window.onload = function() {
-            window.print();
-            window.close();
-          };
-        <\/script>
+        ${printElement.innerHTML}
       </body>
     </html>
   `);
   printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 350);
 }
 
 function formatPrice(price) {

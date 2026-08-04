@@ -18,21 +18,48 @@ class BestSellingExport implements FromCollection, WithHeadings
 
     public function collection()
     {
-        $startDate = match ($this->period) {
-            'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
-            'monthly' => now()->startOfMonth(),
-            'yearly' => now()->startOfYear(),
-            default => now()->startOfMonth(),
-        };
+        $startDate = null;
+        $endDate = null;
 
-        $orderItems = OrderItem::whereHas('order', fn($q) => $q->where('status', 'selesai')->where('created_at', '>=', $startDate))
+        $tz = 'Asia/Makassar';
+        switch ($this->period) {
+            case 'daily':
+                $startDate = \Carbon\Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfDay()->setTimezone('UTC');
+                break;
+            case 'weekly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfWeek()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfWeek()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'monthly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+            case 'yearly':
+                $startDate = \Carbon\Carbon::now($tz)->startOfYear()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfYear()->endOfDay()->setTimezone('UTC');
+                break;
+            default:
+                $startDate = \Carbon\Carbon::now($tz)->startOfMonth()->startOfDay()->setTimezone('UTC');
+                $endDate = \Carbon\Carbon::now($tz)->endOfMonth()->endOfDay()->setTimezone('UTC');
+                break;
+        }
+
+        $orderItems = OrderItem::whereHas('order', function($q) use ($startDate, $endDate) {
+            $q->where('status', 'selesai');
+            if ($startDate) $q->where('created_at', '>=', $startDate);
+            if ($endDate) $q->where('created_at', '<=', $endDate);
+        })
             ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
             ->groupBy('product_id')
             ->with('product:id,name')
             ->get();
 
-        $preOrderItems = PreOrderItem::whereHas('preOrder', fn($q) => $q->where('status', 'completed')->where('created_at', '>=', $startDate))
+        $preOrderItems = PreOrderItem::whereHas('preOrder', function($q) use ($startDate, $endDate) {
+            $q->where('status', 'completed');
+            if ($startDate) $q->where('created_at', '>=', $startDate);
+            if ($endDate) $q->where('created_at', '<=', $endDate);
+        })
             ->selectRaw('product_id, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
             ->groupBy('product_id')
             ->with('product:id,name')

@@ -15,6 +15,10 @@ class CashierController extends Controller
 {
     public function index()
     {
+        if (auth()->user()->role === 'admin') {
+            return redirect()->route('admin.dashboard')->with('error', 'Akses ke Kasir khusus untuk role Kasir.');
+        }
+
         $products = Product::where('status', true)
             ->latest()
             ->get()
@@ -22,6 +26,9 @@ class CashierController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'price' => $p->price,
+                'final_price' => $p->final_price,
+                'is_discount_active' => $p->is_discount_active,
+                'discount_percent' => $p->discount_percent,
                 'stock' => $p->stock,
                 'thumbnail_url' => $p->thumbnail_url,
             ]);
@@ -55,7 +62,7 @@ class CashierController extends Controller
             if ($product->stock < $item['qty']) {
                 return back()->with('error', "Stok produk {$product->name} tidak mencukupi (Tersedia: {$product->stock}).");
             }
-            $totalAmount += $product->price * $item['qty'];
+            $totalAmount += $product->final_price * $item['qty'];
         }
 
         if ($request->cash_received < $totalAmount) {
@@ -86,8 +93,8 @@ class CashierController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'qty' => $item['qty'],
-                    'price' => $product->price,
-                    'subtotal' => $product->price * $item['qty'],
+                    'price' => $product->final_price,
+                    'subtotal' => $product->final_price * $item['qty'],
                 ]);
 
                 $stockBefore = $product->stock;
@@ -120,8 +127,11 @@ class CashierController extends Controller
                 return [
                     'name' => $product->name,
                     'qty' => $item['qty'],
-                    'price' => $product->price,
-                    'subtotal' => $product->price * $item['qty'],
+                    'price' => $product->final_price,
+                    'original_price' => $product->price,
+                    'is_discount_active' => $product->is_discount_active,
+                    'discount_percent' => $product->discount_percent,
+                    'subtotal' => $product->final_price * $item['qty'],
                 ];
             })->toArray(),
         ];
